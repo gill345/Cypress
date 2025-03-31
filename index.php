@@ -13,6 +13,14 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
+
+$query = "SELECT id, description, report_type, latitude, longitude, status FROM city_reports WHERE status IN ('In Progress', 'Resolved')";
+$result = $conn->query($query);
+
+$displayed_reports = [];
+while ($row = $result->fetch_assoc()) {
+    $displayed_reports[] = $row;
+}
 ?>
 
 <!DOCTYPE html>
@@ -48,7 +56,7 @@ if (!isset($_SESSION['user_id'])) {
     }
 
     #map {
-        height: 350px;
+        height: 750px;
         width: 75%;
         margin: 0 auto; 
         display: block; 
@@ -109,8 +117,62 @@ if (!isset($_SESSION['user_id'])) {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
+    var customIcons = {
+        "accident": L.icon({
+            iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        }),
+        "pothole": L.icon({
+            iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        }),
+        "construction": L.icon({
+            iconUrl: 'https://img.icons8.com/color/100/crane.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        }),
+        "crime": L.icon({
+            iconUrl: 'https://img.icons8.com/color/100/pickpocket.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        }),
+        "streetlight issue": L.icon({
+            iconUrl: 'https://img.icons8.com/color/100/traffic-light.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        }),
+        "other": L.icon({
+            iconUrl: 'https://img.icons8.com/color/100/error--v1.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -50]
+        })
+    };
 
-    
+    var displayedReports = <?php echo json_encode($displayed_reports); ?>;
+
+    displayedReports.forEach(function(report) {
+        var icon = customIcons[report.report_type.toLowerCase()] || L.icon({
+            iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30],
+            popupAnchor: [0, -30]
+        });
+
+        var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
+
+        marker.bindTooltip(
+            `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}`,
+            { permanent: false, direction: 'top' }
+        );
+    });
 
     map.on('click', function(e) {
         var coords = e.latlng;
