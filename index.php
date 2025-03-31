@@ -2,6 +2,13 @@
 require_once 'db.php';
 session_start();
 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sign_out'])) {
+    session_destroy();
+    header('Location: login.php');
+    exit();
+}
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
@@ -34,25 +41,46 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 
 <style>
-    #map { height: 350px; }
-    #map { width: 75%; }
-    #map { margin: 0 auto; }
-  </style>
+    #map {
+        height: 350px;
+        width: 75%;
+        margin: 0 auto; 
+        display: block; 
+    }
 
+    .sign-out-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
 
+    .center-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; 
+        text-align: center;
+    }
+</style>
 
-<body class="container bg-secondary">
-    <div class="container">
+<body class="container bg-light">
+    
+  
+    <form method="post" class="sign-out-btn">
+        <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
+    </form>
 
-
-        <div class="box text-center">
-            <h1 class="h1 text-light">Cypress</h1>
-            <p class="h5 text-light">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
-
+    
+        <div class="container">
+            <div class="box text-center">
+                <h1 class="h1 text-primary">Cypress</h1>
+                <p class="h5 text-dark">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
+            </div>
         </div>
-    </div>
 
-    <div id="map"></div>
+        <div class="center-content" id="map"></div>
+    
 
     <script>
         var map = L.map('map').setView([43.66127272915081, -79.38768514171629], 12);
@@ -63,6 +91,13 @@ if (!isset($_SESSION['user_id'])) {
 
     var marker = L.marker([43.66127272915081, -79.38768514171629]).addTo(map);
     var marker = L.marker([43.64272915081, -79.3768514171629]).addTo(map);
+    
+
+    map.on('click', function(e) {
+        var coords = e.latlng;
+        var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
+        window.location.href = url;
+    });
     
     </script>
 </body>
