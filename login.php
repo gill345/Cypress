@@ -23,13 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_role'] = $user['role'];
 
             echo 'Successful Login! Welcome ' . $user['name'];
-
-            // Redirect based on user role
-            if ($user['role'] === 'admin') {
-                header('Location: admin.php');
-            } else {
                 header('Location: index.php');
-            }
+            
             exit();
 
         } else {

@@ -16,22 +16,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sign_out'])) {
 $lat = isset($_GET['lat']) ? htmlspecialchars($_GET['lat']) : '';
 $lng = isset($_GET['lng']) ? htmlspecialchars($_GET['lng']) : '';
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $description = htmlspecialchars($_POST['description']);
-    $report_type = htmlspecialchars($_POST['report_type']);
-    $latitude = htmlspecialchars($_POST['latitude']);
-    $longitude = htmlspecialchars($_POST['longitude']);
-    $contact_info = isset($_POST['contact_info']) ? htmlspecialchars($_POST['contact_info']) : null;
-    $user_id = $_SESSION['user_id'];
+    
+        $description = htmlspecialchars($_POST['description']);
+        $report_type = htmlspecialchars($_POST['report_type']);
+        $latitude = htmlspecialchars($_POST['latitude']);
+        $longitude = htmlspecialchars($_POST['longitude']);
+        $contact_info = isset($_POST['contact_info']) ? htmlspecialchars($_POST['contact_info']) : null;
+        $user_id = $_SESSION['user_id'];
 
 
-    $stmt = $db->prepare("INSERT INTO city_reports (user_id, description, report_type, latitude, longitude, contact_info, status) VALUES (?, ?, ?, ?, ?, ?, 'Submitted')");
-    $stmt->execute([$user_id, $description, $report_type, $latitude, $longitude, $contact_info]);
+        // Insert the report into the database
+        $stmt = $conn->prepare("INSERT INTO city_reports (user_id, description, report_type, latitude, longitude, contact_info, status) VALUES (?, ?, ?, ?, ?, ?, 'Submitted')");
+        $stmt->execute([$user_id, $description, $report_type, $latitude, $longitude, $contact_info]);
 
-
-    header('Location: index.php?report=submitted');
-    exit();
+        // Redirect to a confirmation or index page with a success flag
+        header('Location: index.php?report=submitted');
+        exit();
+    
 }
 ?>
 
@@ -99,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
         <h1><a class="navbar-brand link-dark font-bold fs-1" href="index.php">Project Cypress</a></h1>
         <form method="post" action="index.php" class="d-flex">
+            <a href="admin.php" class="btn btn-warning me-2">Admin Mode</a>
             <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
         </form>
     </nav>
@@ -113,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="report_type" class="form-label">Report Type</label>
             <select class="form-select" id="report_type" name="report_type" required>
                 <option value="" disabled selected>Select a type</option>
+                <option value="Accident">Accident</option>
                 <option value="Crime">Crime</option>
                 <option value="Construction">Construction</option>
                 <option value="Pothole">Pothole</option>

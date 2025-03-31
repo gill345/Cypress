@@ -81,9 +81,16 @@ if (!isset($_SESSION['user_id'])) {
     <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
         <h1><a class="navbar-brand link-dark font-bold fs-1" href="index.php">Project Cypress</a></h1>
         <form method="post" class="d-flex">
+            <a href="admin.php" class="btn btn-warning me-2">Admin Mode</a>
             <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
         </form>
     </nav>
+
+    <?php if (isset($_GET['report']) && $_GET['report'] === 'submitted'): ?>
+        <div class="alert alert-success text-center" role="alert">
+            Report submitted successfully!
+        </div>
+    <?php endif; ?>
 
     <div class="container">
         <div class="box text-center">
