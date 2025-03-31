@@ -41,6 +41,12 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 
 <style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
     #map {
         height: 350px;
         width: 75%;
@@ -62,24 +68,31 @@ if (!isset($_SESSION['user_id'])) {
         height: 100vh; 
         text-align: center;
     }
+
+    .navbar {
+        width: 100%;
+        margin: 0;
+    }
 </style>
 
-<body class="container bg-light">
+<body class="bg-light">
     
-  
-    <form method="post" class="sign-out-btn">
-        <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
-    </form>
+    
+    <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
+        <h1><a class="navbar-brand link-dark font-bold fs-1" href="index.php">Project Cypress</a></h1>
+        <form method="post" class="d-flex">
+            <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
+        </form>
+    </nav>
 
-    
-        <div class="container">
-            <div class="box text-center">
-                <h1 class="h1 text-primary">Cypress</h1>
-                <p class="h5 text-dark">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
-            </div>
+    <div class="container">
+        <div class="box text-center">
+            <h1 class="h1 text-primary">Cypress</h1>
+            <p class="h5 text-dark">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
         </div>
+    </div>
 
-        <div class="center-content" id="map"></div>
+    <div class="center-content" id="map"></div>
     
 
     <script>
@@ -89,8 +102,7 @@ if (!isset($_SESSION['user_id'])) {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    var marker = L.marker([43.66127272915081, -79.38768514171629]).addTo(map);
-    var marker = L.marker([43.64272915081, -79.3768514171629]).addTo(map);
+
     
 
     map.on('click', function(e) {

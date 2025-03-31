@@ -15,6 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sign_out'])) {
 
 $lat = isset($_GET['lat']) ? htmlspecialchars($_GET['lat']) : '';
 $lng = isset($_GET['lng']) ? htmlspecialchars($_GET['lng']) : '';
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $description = htmlspecialchars($_POST['description']);
+    $report_type = htmlspecialchars($_POST['report_type']);
+    $latitude = htmlspecialchars($_POST['latitude']);
+    $longitude = htmlspecialchars($_POST['longitude']);
+    $contact_info = isset($_POST['contact_info']) ? htmlspecialchars($_POST['contact_info']) : null;
+    $user_id = $_SESSION['user_id'];
+
+
+    $stmt = $db->prepare("INSERT INTO city_reports (user_id, description, report_type, latitude, longitude, contact_info, status) VALUES (?, ?, ?, ?, ?, ?, 'Submitted')");
+    $stmt->execute([$user_id, $description, $report_type, $latitude, $longitude, $contact_info]);
+
+
+    header('Location: index.php?report=submitted');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -42,6 +60,12 @@ $lng = isset($_GET['lng']) ? htmlspecialchars($_GET['lng']) : '';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
     #map {
         height: 350px;
         width: 75%;
@@ -64,15 +88,23 @@ $lng = isset($_GET['lng']) ? htmlspecialchars($_GET['lng']) : '';
     .container {
         margin-top: 20px;
     }
+
+    .navbar {
+        width: 100%;
+        margin: 0;
+    }
 </style>
-<body class="container bg-light">
-    <!-- Sign-out button -->
-    <form method="post" action="index.php" class="sign-out-btn">
-        <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
-    </form>
+<body class="bg-light">
+ 
+    <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
+        <h1><a class="navbar-brand link-dark font-bold fs-1" href="index.php">Project Cypress</a></h1>
+        <form method="post" action="index.php" class="d-flex">
+            <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
+        </form>
+    </nav>
 
     <h1 class="text-center text-primary mt-4">Submit a City Report</h1>
-    <form action="submit_report.php" method="post" class="mt-4">
+    <form action="report.php" method="post" class="mt-4 p-3">
         <div class="mb-3">
             <label for="description" class="form-label">Report Description</label>
             <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
@@ -100,7 +132,10 @@ $lng = isset($_GET['lng']) ? htmlspecialchars($_GET['lng']) : '';
             <label for="contact_info" class="form-label">Contact Information (Optional)</label>
             <input type="text" class="form-control" id="contact_info" name="contact_info" placeholder="Email or Phone">
         </div>
-        <button type="submit" class="btn btn-primary">Submit Report</button>
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+            <a href="index.php" class="btn btn-secondary">Return to Home</a>
+        </div>
     </form>
 </body>
 </html>
