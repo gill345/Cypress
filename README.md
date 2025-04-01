@@ -19,7 +19,7 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 ## Setup Instructions
 1. Clone the repository: `git clone https://github.com/gill345/cypress.git`
 2. Set up a MySQL database and import the provided SQL schema.
-3. Configure the database connection in `config.php`.
+3. Configure the database connection in `db.php`.
 4. Ensure you have PHP and a web server (like XAMPP, or InfinityFree) installed.
 5. Start the server and access the application via the browser.
 
