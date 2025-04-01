@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            background: linear-gradient(135deg,rgb(0, 0, 0), #cfdef3);
             min-height: 100vh;
             display: flex;
             align-items: center;
