@@ -14,7 +14,22 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$query = "SELECT id, description, report_type, latitude, longitude, status FROM city_reports WHERE status IN ('In Progress', 'Resolved')";
+$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$filter_type = isset($_GET['type']) ? $_GET['type'] : '';
+$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
+
+$query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE 1=1";
+
+if (!empty($filter_status)) {
+    $query .= " AND status = '" . $conn->real_escape_string($filter_status) . "'";
+}
+if (!empty($filter_type)) {
+    $query .= " AND report_type = '" . $conn->real_escape_string($filter_type) . "'";
+}
+if (!empty($filter_urgency)) {
+    $query .= " AND urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+}
+
 $result = $conn->query($query);
 
 $displayed_reports = [];
@@ -107,6 +122,45 @@ while ($row = $result->fetch_assoc()) {
         </div>
     </div>
 
+    <div class="container mt-4">
+        <form method="GET" action="index.php" class="row g-3">
+            <div class="col-md-4">
+                <label for="status" class="form-label">Filter by Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="Submitted" <?php echo $filter_status === 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
+                    <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
+                    <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="type" class="form-label">Filter by Type</label>
+                <select id="type" name="type" class="form-select">
+                    <option value="">All</option>
+                    <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
+                    <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
+                    <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
+                    <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
+                    <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
+                    <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="urgency" class="form-label">Filter by Urgency</label>
+                <select id="urgency" name="urgency" class="form-select">
+                    <option value="">All</option>
+                    <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
+                    <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
+                    <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
+                </select>
+            </div>
+            <div class="col-12 text-center pb-4">
+                <button type="submit" class="btn btn-success">Apply Filters</button>
+                <a href="index.php" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
     <div class="center-content" id="map"></div>
     
 
@@ -169,7 +223,7 @@ while ($row = $result->fetch_assoc()) {
         var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
 
         marker.bindTooltip(
-            `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}`,
+            `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}<br><strong>Urgency:</strong> ${report.urgency}<br><strong>Created At:</strong> ${report.created_at}`,
             { permanent: false, direction: 'top' }
         );
     });

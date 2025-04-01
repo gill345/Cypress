@@ -22,15 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $report_type = htmlspecialchars($_POST['report_type']);
         $latitude = htmlspecialchars($_POST['latitude']);
         $longitude = htmlspecialchars($_POST['longitude']);
+        $urgency = htmlspecialchars($_POST['urgency']); 
         $contact_info = isset($_POST['contact_info']) ? htmlspecialchars($_POST['contact_info']) : null;
         $user_id = $_SESSION['user_id'];
 
 
-        // Insert the report into the database
-        $stmt = $conn->prepare("INSERT INTO city_reports (user_id, description, report_type, latitude, longitude, contact_info, status) VALUES (?, ?, ?, ?, ?, ?, 'Submitted')");
-        $stmt->execute([$user_id, $description, $report_type, $latitude, $longitude, $contact_info]);
+      
+        $stmt = $conn->prepare("INSERT INTO city_reports (user_id, description, report_type, latitude, longitude, urgency, contact_info, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Submitted')");
+        $stmt->execute([$user_id, $description, $report_type, $latitude, $longitude, $urgency, $contact_info]);
 
-        // Redirect to a confirmation or index page with a success flag
+      
         header('Location: index.php?report=submitted');
         exit();
     
@@ -131,6 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="mb-3">
             <label for="longitude" class="form-label">Longitude</label>
             <input type="text" class="form-control" id="longitude" name="longitude" value="<?php echo $lng; ?>" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="urgency" class="form-label">Urgency</label>
+            <select class="form-select" id="urgency" name="urgency" required>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
         </div>
         <div class="mb-3">
             <label for="contact_info" class="form-label">Contact Information (Optional)</label>

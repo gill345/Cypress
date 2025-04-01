@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, users.name AS submitted_by 
+$query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, city_reports.created_at, city_reports.urgency, users.name AS submitted_by 
           FROM city_reports 
           LEFT JOIN users ON city_reports.user_id = users.id";
 $result = $conn->query($query);
@@ -227,8 +227,10 @@ foreach ($reports as $report) {
                     <p class="card-text"><strong>Description:</strong> <?php echo htmlspecialchars($group['description']); ?></p>
                     <p class="card-text"><strong>Type:</strong> <?php echo htmlspecialchars($group['report_type']); ?></p>
                     <p class="card-text"><strong>Status:</strong> <?php echo htmlspecialchars($group['status']); ?></p>
+                    <p class="card-text"><strong>Urgency:</strong> <?php echo htmlspecialchars($group['urgency']); ?></p>
                     <p class="card-text"><strong>Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
                     <p class="card-text"><strong>Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
+                    <p class="card-text"><strong>Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
                     
                     <div id="map-<?php echo htmlspecialchars($group['id']); ?>" class="map-container"></div>
                     <script>
