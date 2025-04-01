@@ -102,7 +102,12 @@ while ($row = $result->fetch_assoc()) {
     
     
     <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
-        <h1><a class="navbar-brand link-dark font-bold fs-1" href="index.php">Project Cypress</a></h1>
+        <h1>
+            <a class="navbar-brand link-dark font-bold fs-1 d-flex align-items-center" href="index.php">
+                <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+                Project Cypress
+            </a>
+        </h1>
         <form method="post" class="d-flex">
             <a href="admin.php" class="btn btn-warning me-2">Admin Mode</a>
             <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
