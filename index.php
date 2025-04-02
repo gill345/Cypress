@@ -17,6 +17,7 @@ if (!isset($_SESSION['user_id'])) {
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_type = isset($_GET['type']) ? $_GET['type'] : '';
 $filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
+$filter_time = isset($_GET['time']) ? $_GET['time'] : '';
 
 $query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE status != 'Submitted'";
 
@@ -28,6 +29,24 @@ if (!empty($filter_type)) {
 }
 if (!empty($filter_urgency)) {
     $query .= " AND urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+}
+if (!empty($filter_time)) {
+    $time_condition = '';
+    switch ($filter_time) {
+        case 'last_hour':
+            $time_condition = "AND created_at >= NOW() - INTERVAL 1 HOUR";
+            break;
+        case 'last_day':
+            $time_condition = "AND created_at >= NOW() - INTERVAL 1 DAY";
+            break;
+        case 'last_week':
+            $time_condition = "AND created_at >= NOW() - INTERVAL 1 WEEK";
+            break;
+        case 'last_month':
+            $time_condition = "AND created_at >= NOW() - INTERVAL 1 MONTH";
+            break;
+    }
+    $query .= " $time_condition";
 }
 
 $result = $conn->query($query);
@@ -150,17 +169,17 @@ while ($row = $result->fetch_assoc()) {
         <div class="search-container">
             <input type="text" id="location-search" class="form-control" placeholder="Search for a location...">
         </div>
-        <form method="GET" action="index.php" class="row g-3">
-            <div class="col-md-4">
-                <label for="status" class="form-label">Filter by Status</label>
+        <form method="GET" action="index.php" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
                 <select id="status" name="status" class="form-select">
                     <option value="">All</option>
                     <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
                     <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label for="type" class="form-label">Filter by Type</label>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
                 <select id="type" name="type" class="form-select">
                     <option value="">All</option>
                     <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
@@ -171,8 +190,8 @@ while ($row = $result->fetch_assoc()) {
                     <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label for="urgency" class="form-label">Filter by Urgency</label>
+            <div class="col-md-3">
+                <label for="urgency" class="form-label">Urgency</label>
                 <select id="urgency" name="urgency" class="form-select">
                     <option value="">All</option>
                     <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
@@ -180,7 +199,17 @@ while ($row = $result->fetch_assoc()) {
                     <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
                 </select>
             </div>
-            <div class="col-12 text-center pb-4">
+            <div class="col-md-3">
+                <label for="time" class="form-label">Time</label>
+                <select id="time" name="time" class="form-select">
+                    <option value="">All</option>
+                    <option value="last_hour" <?php echo $filter_time === 'last_hour' ? 'selected' : ''; ?>>Last Hour</option>
+                    <option value="last_day" <?php echo $filter_time === 'last_day' ? 'selected' : ''; ?>>Last Day</option>
+                    <option value="last_week" <?php echo $filter_time === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
+                    <option value="last_month" <?php echo $filter_time === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
+                </select>
+            </div>
+            <div class="col-12 text-center mt-3 pb-4">
                 <button type="submit" class="btn btn-success">Apply Filters</button>
                 <a href="index.php" class="btn btn-secondary">Clear Filters</a>
             </div>

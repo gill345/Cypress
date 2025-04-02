@@ -320,6 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $filter_type = isset($_GET['type']) ? $_GET['type'] : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
+$filter_time = isset($_GET['time']) ? $_GET['time'] : '';
 
 // Modify the query to include filters
 $query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, city_reports.created_at, city_reports.urgency, city_reports.emergency_contacted, city_reports.city_service_contacted, users.name AS submitted_by 
@@ -335,6 +336,24 @@ if (!empty($filter_status)) {
 }
 if (!empty($filter_urgency)) {
     $query .= " AND city_reports.urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+}
+if (!empty($filter_time)) {
+    $time_condition = '';
+    switch ($filter_time) {
+        case 'last_hour':
+            $time_condition = "AND city_reports.created_at >= NOW() - INTERVAL 1 HOUR";
+            break;
+        case 'last_day':
+            $time_condition = "AND city_reports.created_at >= NOW() - INTERVAL 1 DAY";
+            break;
+        case 'last_week':
+            $time_condition = "AND city_reports.created_at >= NOW() - INTERVAL 1 WEEK";
+            break;
+        case 'last_month':
+            $time_condition = "AND city_reports.created_at >= NOW() - INTERVAL 1 MONTH";
+            break;
+    }
+    $query .= " $time_condition";
 }
 
 $result = $conn->query($query);
@@ -514,42 +533,54 @@ foreach ($reports as $report) {
         <h2 class="text-center mb-4">Admin Problem Review Dashboard</h2>
 
         <!-- Filter Form -->
-        <form method="GET" action="admin.php" class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label for="type" class="form-label">Filter by Type</label>
-                <select id="type" name="type" class="form-select">
-                    <option value="">All</option>
-                    <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
-                    <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
-                    <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
-                    <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
-                    <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
-                    <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="status" class="form-label">Filter by Status</label>
-                <select id="status" name="status" class="form-select">
-                    <option value="">All</option>
-                    <option value="Submitted" <?php echo $filter_status === 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
-                    <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
-                    <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="urgency" class="form-label">Filter by Urgency</label>
-                <select id="urgency" name="urgency" class="form-select">
-                    <option value="">All</option>
-                    <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
-                    <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
-                    <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
-                </select>
-            </div>
-            <div class="col-12 text-center">
-                <button type="submit" class="btn btn-success">Apply Filters</button>
-                <a href="admin.php" class="btn btn-secondary">Clear Filters</a>
-            </div>
-        </form>
+        <div class="container">
+            <form method="GET" action="admin.php" class="row g-2 align-items-end mb-4">
+                <div class="col-md-3">
+                    <label for="type" class="form-label">Type</label>
+                    <select id="type" name="type" class="form-select">
+                        <option value="">All</option>
+                        <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
+                        <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
+                        <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
+                        <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
+                        <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
+                        <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All</option>
+                        <option value="Submitted" <?php echo $filter_status === 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
+                        <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
+                        <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="urgency" class="form-label">Urgency</label>
+                    <select id="urgency" name="urgency" class="form-select">
+                        <option value="">All</option>
+                        <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
+                        <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
+                        <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="time" class="form-label">Time</label>
+                    <select id="time" name="time" class="form-select">
+                        <option value="">All</option>
+                        <option value="last_hour" <?php echo $filter_time === 'last_hour' ? 'selected' : ''; ?>>Last Hour</option>
+                        <option value="last_day" <?php echo $filter_time === 'last_day' ? 'selected' : ''; ?>>Last Day</option>
+                        <option value="last_week" <?php echo $filter_time === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
+                        <option value="last_month" <?php echo $filter_time === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
+                    </select>
+                </div>
+                <div class="col-12 text-center mt-3">
+                    <button type="submit" class="btn btn-success">Apply Filters</button>
+                    <a href="admin.php" class="btn btn-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
 
         <?php foreach ($grouped_reports as $group): ?>
             <div class="card mb-4">
