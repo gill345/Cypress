@@ -625,13 +625,12 @@ foreach ($reports as $report) {
                         </div>
                     <?php endif; ?>
 
-                    <div class="mt-3 d-flex align-items-center">
-                        <button class="btn btn-warning me-2" onclick="contactEmergencyService(<?php echo $group['id']; ?>)">Contact Emergency Service</button>
-                        <button class="btn btn-info me-2" onclick="contactCityService(<?php echo $group['id']; ?>)">Contact City Service</button>
-                        <button class="btn btn-primary me-2" onclick="setInProgress(<?php echo $group['id']; ?>)">Set In Progress</button>
-                        <button class="btn btn-success me-2" onclick="setResolved(<?php echo $group['id']; ?>)">Set Resolved</button>
-                        <button class="btn btn-danger" onclick="deleteProblem(<?php echo $group['id']; ?>)">Delete</button>
-                        
+                    <div class="mt-3 d-flex flex-wrap">
+                        <button class="btn btn-warning btn-sm me-1 mb-1" onclick="contactEmergencyService(<?php echo $group['id']; ?>)">Contact Emergency Service</button>
+                        <button class="btn btn-info btn-sm me-1 mb-1" onclick="contactCityService(<?php echo $group['id']; ?>)">Contact City Service</button>
+                        <button class="btn btn-primary btn-sm me-1 mb-1" onclick="setInProgress(<?php echo $group['id']; ?>)">Set In Progress</button>
+                        <button class="btn btn-success btn-sm me-1 mb-1" onclick="setResolved(<?php echo $group['id']; ?>)">Set Resolved</button>
+                        <button class="btn btn-danger btn-sm mb-1" onclick="deleteProblem(<?php echo $group['id']; ?>)">Delete</button>
                     </div>
                 </div>
             </div>
