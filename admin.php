@@ -1,7 +1,81 @@
 <?php
 require_once 'db.php';
+require_once 'PHPMailer/PHPMailer.php';
+require_once 'PHPMailer/SMTP.php';
+require_once 'PHPMailer/Exception.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
 session_start();
 
+// Function to send status update notifications
+function sendStatusNotification($report_id, $status, $recipient_email) {
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->SMTPDebug = SMTP::DEBUG_OFF;
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'son18032005@gmail.com';
+        $mail->Password   = 'lkxhhtncozhbybui';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        
+        // Recipients
+        $mail->setFrom('son18032005@gmail.com', 'Cypress Notification');
+        $mail->addAddress($recipient_email);
+        
+        // Content
+        $mail->isHTML(true);
+        
+        switch ($status) {
+            case 'In Progress':
+                $mail->Subject = 'Your Report #' . $report_id . ' is Now In Progress - Cypress';
+                $mail->Body = "
+                    <h2>Your Report #$report_id is Now Being Processed!</h2>
+                    <p>Good news! Our team has reviewed your report and we are now actively working on addressing the issue.</p>
+                    <p>We will keep you updated on any further developments.</p>
+                    <p>Thank you for helping make our city better!</p>
+                    <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
+                ";
+                break;
+                
+            case 'Resolved':
+                $mail->Subject = 'Your Report #' . $report_id . ' Has Been Resolved - Cypress';
+                $mail->Body = "
+                    <h2>Your Report #$report_id Has Been Successfully Resolved!</h2>
+                    <p>We're pleased to inform you that the issue you reported has been completely resolved.</p>
+                    <p>Thank you for your valuable contribution to improving our community!</p>
+                    <p>If you notice any other issues in the future, please don't hesitate to submit another report.</p>
+                    <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
+                ";
+                break;
+                
+            case 'Deleted':
+            case 'Duplicates Removed':
+                $mail->Subject = 'Update Regarding Your Report #' . $report_id . ' - Cypress';
+                $mail->Body = "
+                    <h2>Important Update About Your Report #$report_id</h2>
+                    <p>We will no longer be proceeding further with this report anymore and have it removed from our system.</p>
+                    <p>This could be due to various reasons such as inappropiate information, duplicate reports, issue being outside our jurisdiction or has been resolved.</p>
+                    <p>We appreciate your time and effort in bringing this matter to our attention.</p>
+                    <p>Please feel free to submit new reports for other issues in the future.</p>
+                    <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
+                ";
+                break;
+        }
+        
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Email sending failed: {$mail->ErrorInfo}");
+        return false;
+    }
+}
 
 $query = "SELECT role FROM users WHERE id = ?";
 $stmt = $conn->prepare($query);
@@ -51,6 +125,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("si", $new_status, $problem_id);
             $stmt->execute();
             $stmt->close();
+            
+            // Get user email for notification
+            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
+                           FROM city_reports cr 
+                           LEFT JOIN users u ON cr.user_id = u.id 
+                           WHERE cr.id = ?";
+            $stmt = $conn->prepare($email_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user_data = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Send notification if user has opted in
+            if ($user_data && $user_data['notify_updates']) {
+                // Use contact info email if provided, otherwise use user's email
+                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
+                    ? $user_data['contact_info'] 
+                    : $user_data['email'];
+                
+                if ($notification_email) {
+                    sendStatusNotification($problem_id, $new_status, $notification_email);
+                }
+            }
+            
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
             exit();
         }
@@ -62,16 +161,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("si", $new_status, $problem_id);
             $stmt->execute();
             $stmt->close();
+            
+            // Get user email for notification
+            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
+                           FROM city_reports cr 
+                           LEFT JOIN users u ON cr.user_id = u.id 
+                           WHERE cr.id = ?";
+            $stmt = $conn->prepare($email_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user_data = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Send notification if user has opted in
+            if ($user_data && $user_data['notify_updates']) {
+                // Use contact info email if provided, otherwise use user's email
+                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
+                    ? $user_data['contact_info'] 
+                    : $user_data['email'];
+                
+                if ($notification_email) {
+                    sendStatusNotification($problem_id, $new_status, $notification_email);
+                }
+            }
+            
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
             exit();
         }
 
         if ($action === 'delete') {
+            // Get user email for notification before deleting
+            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
+                           FROM city_reports cr 
+                           LEFT JOIN users u ON cr.user_id = u.id 
+                           WHERE cr.id = ?";
+            $stmt = $conn->prepare($email_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user_data = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Delete the report
             $delete_query = "DELETE FROM city_reports WHERE id = ?";
             $stmt = $conn->prepare($delete_query);
             $stmt->bind_param("i", $problem_id);
             $stmt->execute();
             $stmt->close();
+            
+            // Send notification if user has opted in
+            if ($user_data && $user_data['notify_updates']) {
+                // Use contact info email if provided, otherwise use user's email
+                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
+                    ? $user_data['contact_info'] 
+                    : $user_data['email'];
+                
+                if ($notification_email) {
+                    sendStatusNotification($problem_id, 'Deleted', $notification_email);
+                }
+            }
+            
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id has been deleted"]);
             exit();
         }
@@ -79,19 +229,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'accept_with_duplicates') {
             $duplicates = isset($_POST['duplicates']) ? json_decode($_POST['duplicates'], true) : [];
             $duplicates = array_map('intval', $duplicates);
-
+            
+            // Get user email for notification before updating
+            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
+                           FROM city_reports cr 
+                           LEFT JOIN users u ON cr.user_id = u.id 
+                           WHERE cr.id = ?";
+            $stmt = $conn->prepare($email_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user_data = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Update the selected report to "In Progress"
             $update_query = "UPDATE city_reports SET status = 'In Progress' WHERE id = ?";
             $stmt = $conn->prepare($update_query);
             $stmt->bind_param("i", $problem_id);
             $stmt->execute();
             $stmt->close();
-
+            
+            // Send notification for the selected report if user has opted in
+            if ($user_data && $user_data['notify_updates']) {
+                // Use contact info email if provided, otherwise use user's email
+                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
+                    ? $user_data['contact_info'] 
+                    : $user_data['email'];
+                
+                if ($notification_email) {
+                    sendStatusNotification($problem_id, 'In Progress', $notification_email);
+                }
+            }
+            
+            // Handle reports to remove
             if (!empty($duplicates)) {
+                // Get user emails for reports to be removed
+                $duplicate_ids = implode(',', $duplicates);
+                $duplicate_query = "SELECT cr.id, u.email, cr.contact_info, cr.notify_updates 
+                                   FROM city_reports cr 
+                                   LEFT JOIN users u ON cr.user_id = u.id 
+                                   WHERE cr.id IN ($duplicate_ids)";
+                $duplicate_result = $conn->query($duplicate_query);
+                
+                // Delete the reports
                 $delete_query = "DELETE FROM city_reports WHERE id IN (" . implode(',', $duplicates) . ")";
                 $conn->query($delete_query);
+                
+                // Send notifications for removed reports
+                while ($duplicate = $duplicate_result->fetch_assoc()) {
+                    if ($duplicate['notify_updates']) {
+                        // Use contact info email if provided, otherwise use user's email
+                        $notification_email = !empty($duplicate['contact_info']) && filter_var($duplicate['contact_info'], FILTER_VALIDATE_EMAIL) 
+                            ? $duplicate['contact_info'] 
+                            : $duplicate['email'];
+                        
+                        if ($notification_email) {
+                            sendStatusNotification($duplicate['id'], 'Duplicates Removed', $notification_email);
+                        }
+                    }
+                }
             }
-
-            echo json_encode(['success' => true, 'message' => "Problem #$problem_id accepted and duplicates removed"]);
+            
+            echo json_encode(['success' => true, 'message' => "Report #$problem_id has been processed and duplicates removed"]);
             exit();
         }
     }
@@ -303,12 +502,45 @@ foreach ($reports as $report) {
                     <?php if (!empty($group['duplicates'])): ?>
                         <div class="mt-3">
                             <p class="card-text text-danger"><strong>Duplicates:</strong> <?php echo count($group['duplicates']); ?></p>
-                            <ul>
-                                <?php foreach ($group['duplicates'] as $duplicate): ?>
-                                    <li>Duplicate Problem #<?php echo htmlspecialchars($duplicate['id']); ?>: <?php echo htmlspecialchars($duplicate['description']); ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                            <button class="btn btn-primary" onclick="acceptWithDuplicates(<?php echo $group['id']; ?>, <?php echo htmlspecialchars(json_encode(array_column($group['duplicates'], 'id'))); ?>)">Accept and Remove Duplicates</button>
+                            <div class="alert alert-info">
+                                <p>These reports are potential duplicates. Please select which report to keep and all duplicates will be remove.</p>
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="keep_report_<?php echo $group['id']; ?>" id="keep_main_<?php echo $group['id']; ?>" value="<?php echo $group['id']; ?>" checked>
+                                        <label class="form-check-label" for="keep_main_<?php echo $group['id']; ?>">
+                                            <strong>Main Report #<?php echo htmlspecialchars($group['id']); ?></strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h5>Duplicate Reports:</h5>
+                            <?php foreach ($group['duplicates'] as $duplicate): ?>
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="keep_report_<?php echo $group['id']; ?>" id="keep_duplicate_<?php echo $duplicate['id']; ?>" value="<?php echo $duplicate['id']; ?>">
+                                            <label class="form-check-label" for="keep_duplicate_<?php echo $duplicate['id']; ?>">
+                                                <strong>Duplicate Report #<?php echo htmlspecialchars($duplicate['id']); ?></strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text"><strong>Description:</strong> <?php echo htmlspecialchars($duplicate['description']); ?></p>
+                                        <p class="card-text"><strong>Type:</strong> <?php echo htmlspecialchars($duplicate['report_type']); ?></p>
+                                        <p class="card-text"><strong>Status:</strong> <?php echo htmlspecialchars($duplicate['status']); ?></p>
+                                        <p class="card-text"><strong>Urgency:</strong> <?php echo htmlspecialchars($duplicate['urgency']); ?></p>
+                                        <p class="card-text"><strong>Submitted By:</strong> <?php echo htmlspecialchars($duplicate['submitted_by'] ?: 'Unknown'); ?></p>
+                                        <p class="card-text"><strong>Contact Info:</strong> <?php echo htmlspecialchars($duplicate['contact_info'] ?: 'N/A'); ?></p>
+                                        <p class="card-text"><strong>Created At:</strong> <?php echo htmlspecialchars($duplicate['created_at']); ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            
+                            <button class="btn btn-primary" onclick="handleDuplicates(<?php echo $group['id']; ?>, <?php echo htmlspecialchars(json_encode(array_column($group['duplicates'], 'id'))); ?>)">Process Selected Report</button>
                         </div>
                     <?php else: ?>
                         <div class="mt-3">
@@ -402,7 +634,27 @@ foreach ($reports as $report) {
             }
         }
 
-        function acceptWithDuplicates(id, duplicates) {
+        function handleDuplicates(mainId, duplicates) {
+            // Get the selected report to keep
+            const selectedReportId = document.querySelector(`input[name="keep_report_${mainId}"]:checked`).value;
+            
+            // Determine which reports to remove
+            let reportsToRemove = [];
+            
+            // If the main report is selected, remove all duplicates
+            if (selectedReportId == mainId) {
+                reportsToRemove = duplicates;
+            } 
+            // If a duplicate is selected, remove the main report and all other duplicates
+            else {
+                reportsToRemove.push(mainId);
+                duplicates.forEach(duplicateId => {
+                    if (duplicateId != selectedReportId) {
+                        reportsToRemove.push(duplicateId);
+                    }
+                });
+            }
+            
             fetch('admin.php', {
                 method: 'POST',
                 headers: {
@@ -410,8 +662,8 @@ foreach ($reports as $report) {
                 },
                 body: new URLSearchParams({
                     action: 'accept_with_duplicates',
-                    problem_id: id,
-                    duplicates: JSON.stringify(duplicates)
+                    problem_id: selectedReportId,
+                    duplicates: JSON.stringify(reportsToRemove)
                 })
             })
             .then(response => response.json())
