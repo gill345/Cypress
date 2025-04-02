@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               src="https://bazis.ca/wp-content/uploads/2020/06/skyline-sailing-summer-city-life-downtown-lifestyle-city-view-toronto-harbourfront-lake-ontario_t20_NGbYwp-2048x1536.jpg"
               class="form-image" alt="Toronto Skyline">
           </div>
-          <div class="col-md-6 d-flex align-items-center p-5">
+          <div class="col-md-6 d-flex align-items-center p-4">
             <div class="w-100">
               <div class="text-center mb-3">
                 <a href="login.php">
