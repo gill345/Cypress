@@ -293,14 +293,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['success' => true, 'message' => "Report #$problem_id has been processed and duplicates removed"]);
             exit();
         }
+
+        if ($action === 'contact_emergency') {
+            $update_query = "UPDATE city_reports SET emergency_contacted = 1 WHERE id = ?";
+            $stmt = $conn->prepare($update_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $stmt->close();
+            echo json_encode(['success' => true, 'message' => "Emergency services contacted for Problem #$problem_id"]);
+            exit();
+        }
+
+        if ($action === 'contact_city_service') {
+            $update_query = "UPDATE city_reports SET city_service_contacted = 1 WHERE id = ?";
+            $stmt = $conn->prepare($update_query);
+            $stmt->bind_param("i", $problem_id);
+            $stmt->execute();
+            $stmt->close();
+            echo json_encode(['success' => true, 'message' => "City services contacted for Problem #$problem_id"]);
+            exit();
+        }
     }
 }
 
-$query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, city_reports.created_at, city_reports.urgency, users.name AS submitted_by 
-          FROM city_reports 
-          LEFT JOIN users ON city_reports.user_id = users.id";
-$result = $conn->query($query);
+// Get filter values from the request
+$filter_type = isset($_GET['type']) ? $_GET['type'] : '';
+$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
 
+// Modify the query to include filters
+$query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, city_reports.created_at, city_reports.urgency, city_reports.emergency_contacted, city_reports.city_service_contacted, users.name AS submitted_by 
+          FROM city_reports 
+          LEFT JOIN users ON city_reports.user_id = users.id 
+          WHERE 1=1";
+
+if (!empty($filter_type)) {
+    $query .= " AND city_reports.report_type = '" . $conn->real_escape_string($filter_type) . "'";
+}
+if (!empty($filter_status)) {
+    $query .= " AND city_reports.status = '" . $conn->real_escape_string($filter_status) . "'";
+}
+if (!empty($filter_urgency)) {
+    $query .= " AND city_reports.urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+}
+
+$result = $conn->query($query);
 
 function haversine($lat1, $lon1, $lat2, $lon2) {
     $earth_radius = 6371; 
@@ -313,7 +350,6 @@ function haversine($lat1, $lon1, $lat2, $lon2) {
     return $earth_radius * $c; 
 }
 
-
 $reports = [];
 while ($row = $result->fetch_assoc()) {
     $reports[] = $row;
@@ -323,19 +359,16 @@ $grouped_reports = [];
 $processed_ids = [];
 $distance_threshold = 0.3; 
 
-
 foreach ($reports as $report) {
     if (in_array($report['id'], $processed_ids)) continue; 
     $group = array_merge($report, ['duplicates' => []]);
     $processed_ids[] = $report['id'];
-
 
     foreach ($reports as $other_report) {
         if (in_array($other_report['id'], $processed_ids) || $other_report['id'] === $report['id']) continue;
         $distance = haversine($report['latitude'], $report['longitude'], $other_report['latitude'], $other_report['longitude']);
 
         if ($distance <= $distance_threshold) {
-
             $group['duplicates'][] = $other_report;
             $processed_ids[] = $other_report['id'];
         }
@@ -424,6 +457,45 @@ foreach ($reports as $report) {
 
     <div class="container">
         <h2 class="text-center my-4">Admin Problem Review</h2>
+
+        <!-- Filter Form -->
+        <form method="GET" action="admin.php" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label for="type" class="form-label">Filter by Type</label>
+                <select id="type" name="type" class="form-select">
+                    <option value="">All</option>
+                    <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
+                    <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
+                    <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
+                    <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
+                    <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
+                    <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="status" class="form-label">Filter by Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">All</option>
+                    <option value="Submitted" <?php echo $filter_status === 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
+                    <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
+                    <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="urgency" class="form-label">Filter by Urgency</label>
+                <select id="urgency" name="urgency" class="form-select">
+                    <option value="">All</option>
+                    <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
+                    <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
+                    <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
+                </select>
+            </div>
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-success">Apply Filters</button>
+                <a href="admin.php" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+
         <?php foreach ($grouped_reports as $group): ?>
             <div class="card mb-4">
                 <div class="card-body">
@@ -432,6 +504,8 @@ foreach ($reports as $report) {
                     <p class="card-text"><strong>Type:</strong> <?php echo htmlspecialchars($group['report_type']); ?></p>
                     <p class="card-text"><strong>Status:</strong> <?php echo htmlspecialchars($group['status']); ?></p>
                     <p class="card-text"><strong>Urgency:</strong> <?php echo htmlspecialchars($group['urgency']); ?></p>
+                    <p class="card-text"><strong>Emergency Contacted:</strong> <?php echo $group['emergency_contacted'] ? 'Yes' : 'No'; ?></p>
+                    <p class="card-text"><strong>City Service Contacted:</strong> <?php echo $group['city_service_contacted'] ? 'Yes' : 'No'; ?></p>
                     <p class="card-text"><strong>Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
                     <p class="card-text"><strong>Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
                     <p class="card-text"><strong>Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
@@ -552,9 +626,12 @@ foreach ($reports as $report) {
                     <?php endif; ?>
 
                     <div class="mt-3 d-flex align-items-center">
+                        <button class="btn btn-warning me-2" onclick="contactEmergencyService(<?php echo $group['id']; ?>)">Contact Emergency Service</button>
+                        <button class="btn btn-info me-2" onclick="contactCityService(<?php echo $group['id']; ?>)">Contact City Service</button>
                         <button class="btn btn-primary me-2" onclick="setInProgress(<?php echo $group['id']; ?>)">Set In Progress</button>
                         <button class="btn btn-success me-2" onclick="setResolved(<?php echo $group['id']; ?>)">Set Resolved</button>
                         <button class="btn btn-danger" onclick="deleteProblem(<?php echo $group['id']; ?>)">Delete</button>
+                        
                     </div>
                 </div>
             </div>
@@ -676,6 +753,56 @@ foreach ($reports as $report) {
                 }
             })
             .catch(error => console.error('Error:', error));
+        }
+
+        function contactEmergencyService(reportId) {
+            if (confirm("Are you sure you want to contact Emergency Services for this problem?")) {
+                fetch('admin.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'contact_emergency',
+                        problem_id: reportId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function contactCityService(reportId) {
+            if (confirm("Are you sure you want to contact City Services for this problem?")) {
+                fetch('admin.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'contact_city_service',
+                        problem_id: reportId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
         }
     </script>
 </body>
