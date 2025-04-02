@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $security_question = $_POST['security_question'];
-    $security_answer = password_hash($_POST['security_answer'], PASSWORD_BCRYPT); // Hash the answer for security
+    $security_answer = password_hash($_POST['security_answer'], PASSWORD_BCRYPT); 
 
     $sql = "SELECT email FROM users WHERE email = ?";
     $stmt = $conn->prepare($sql);
@@ -108,12 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     .account-text {
-      font-size: 14px;
+      font-size: 16px;
       color: #343a40;
     }
 
     .sign-in-link {
-      font-size: 14px;
+      font-size: 16px;
       color: #343a40;
       text-decoration: none;
     }
