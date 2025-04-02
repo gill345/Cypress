@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script>
         
         var myCarousel = new bootstrap.Carousel(document.getElementById('imageCarousel'), {
-            interval: 2000,
+            interval: 2500,
             ride: 'carousel'
         });
     </script>
