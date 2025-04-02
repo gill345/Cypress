@@ -586,15 +586,44 @@ foreach ($reports as $report) {
             <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title">Problem #<?php echo htmlspecialchars($group['id']); ?></h5>
-                    <p class="card-text"><strong>Description:</strong> <?php echo htmlspecialchars($group['description']); ?></p>
-                    <p class="card-text"><strong>Type:</strong> <?php echo htmlspecialchars($group['report_type']); ?></p>
-                    <p class="card-text"><strong>Status:</strong> <?php echo htmlspecialchars($group['status']); ?></p>
-                    <p class="card-text"><strong>Urgency:</strong> <?php echo htmlspecialchars($group['urgency']); ?></p>
-                    <p class="card-text"><strong>Emergency Contacted:</strong> <?php echo $group['emergency_contacted'] ? 'Yes' : 'No'; ?></p>
-                    <p class="card-text"><strong>City Service Contacted:</strong> <?php echo $group['city_service_contacted'] ? 'Yes' : 'No'; ?></p>
-                    <p class="card-text"><strong>Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
-                    <p class="card-text"><strong>Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
-                    <p class="card-text"><strong>Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
+                    <p class="card-text"><strong> Description:</strong> <?php echo htmlspecialchars($group['description']); ?></p>
+                    <p class="card-text"><strong> Type:</strong> 
+                        <?php 
+                        switch (strtolower($group['report_type'])) {
+                            case 'accident': echo '🚗 Accident'; break;
+                            case 'crime': echo '🚔 Crime'; break;
+                            case 'construction': echo '🏗️ Construction'; break;
+                            case 'pothole': echo '🕳️ Pothole'; break;
+                            case 'streetlight issue': echo '💡 Streetlight Issue'; break;
+                            default: echo '❓ Other'; break;
+                        }
+                        ?>
+                    </p>
+                    <p class="card-text"><strong> Status:</strong> 
+                        <?php 
+                        switch (strtolower($group['status'])) {
+                            case 'submitted': echo '📤 Submitted'; break;
+                            case 'in progress': echo '⏳ In Progress'; break;
+                            case 'resolved': echo '✅ Resolved'; break;
+                            default: echo htmlspecialchars($group['status']); break;
+                        }
+                        ?>
+                    </p>
+                    <p class="card-text"><strong> Urgency:</strong> 
+                        <?php 
+                        switch (strtolower($group['urgency'])) {
+                            case 'low': echo '🟢 Low'; break;
+                            case 'medium': echo '🟡 Medium'; break;
+                            case 'high': echo '🔴 High'; break;
+                            default: echo htmlspecialchars($group['urgency']); break;
+                        }
+                        ?>
+                    </p>
+                    <p class="card-text"><strong> Emergency Contacted:</strong> <?php echo $group['emergency_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
+                    <p class="card-text"><strong> City Service Contacted:</strong> <?php echo $group['city_service_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
+                    <p class="card-text"><strong> Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
+                    <p class="card-text"><strong> Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
+                    <p class="card-text"><strong> Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
                     
                     <div id="map-<?php echo htmlspecialchars($group['id']); ?>" class="map-container"></div>
                     <script>
@@ -649,13 +678,42 @@ foreach ($reports as $report) {
                                         </div>
                                     </div>
                                     <div class="card-body">
-                                        <p class="card-text"><strong>Description:</strong> <?php echo htmlspecialchars($duplicate['description']); ?></p>
-                                        <p class="card-text"><strong>Type:</strong> <?php echo htmlspecialchars($duplicate['report_type']); ?></p>
-                                        <p class="card-text"><strong>Status:</strong> <?php echo htmlspecialchars($duplicate['status']); ?></p>
-                                        <p class="card-text"><strong>Urgency:</strong> <?php echo htmlspecialchars($duplicate['urgency']); ?></p>
-                                        <p class="card-text"><strong>Submitted By:</strong> <?php echo htmlspecialchars($duplicate['submitted_by'] ?: 'Unknown'); ?></p>
-                                        <p class="card-text"><strong>Contact Info:</strong> <?php echo htmlspecialchars($duplicate['contact_info'] ?: 'N/A'); ?></p>
-                                        <p class="card-text"><strong>Created At:</strong> <?php echo htmlspecialchars($duplicate['created_at']); ?></p>
+                                        <p class="card-text"><strong>📝 Description:</strong> <?php echo htmlspecialchars($duplicate['description']); ?></p>
+                                        <p class="card-text"><strong>📂 Type:</strong> 
+                                            <?php 
+                                            switch (strtolower($duplicate['report_type'])) {
+                                                case 'accident': echo '🚗 Accident'; break;
+                                                case 'crime': echo '🚔 Crime'; break;
+                                                case 'construction': echo '🏗️ Construction'; break;
+                                                case 'pothole': echo '🕳️ Pothole'; break;
+                                                case 'streetlight issue': echo '💡 Streetlight Issue'; break;
+                                                default: echo '❓ Other'; break;
+                                            }
+                                            ?>
+                                        </p>
+                                        <p class="card-text"><strong>📊 Status:</strong> 
+                                            <?php 
+                                            switch (strtolower($duplicate['status'])) {
+                                                case 'submitted': echo '📤 Submitted'; break;
+                                                case 'in progress': echo '⏳ In Progress'; break;
+                                                case 'resolved': echo '✅ Resolved'; break;
+                                                default: echo htmlspecialchars($duplicate['status']); break;
+                                            }
+                                            ?>
+                                        </p>
+                                        <p class="card-text"><strong>⚠️ Urgency:</strong> 
+                                            <?php 
+                                            switch (strtolower($duplicate['urgency'])) {
+                                                case 'low': echo '🟢 Low'; break;
+                                                case 'medium': echo '🟡 Medium'; break;
+                                                case 'high': echo '🔴 High'; break;
+                                                default: echo htmlspecialchars($duplicate['urgency']); break;
+                                            }
+                                            ?>
+                                        </p>
+                                        <p class="card-text"><strong>👤 Submitted By:</strong> <?php echo htmlspecialchars($duplicate['submitted_by'] ?: 'Unknown'); ?></p>
+                                        <p class="card-text"><strong>📧 Contact Info:</strong> <?php echo htmlspecialchars($duplicate['contact_info'] ?: 'N/A'); ?></p>
+                                        <p class="card-text"><strong>⏰ Created At:</strong> <?php echo htmlspecialchars($duplicate['created_at']); ?></p>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
