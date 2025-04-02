@@ -68,10 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .form-image {
+    .carousel-item img {
       height: 100%;
       width: 100%;
       object-fit: cover;
+    }
+
+    #imageCarousel, .carousel-inner, .carousel-item {
+      height: 100%;
     }
 
     .btn-dark {
@@ -142,9 +146,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       <div class="card shadow login-card">
         <div class="row g-0">
           <div class="col-md-6 d-none d-md-block">
-            <img
-              src="https://bazis.ca/wp-content/uploads/2020/06/skyline-sailing-summer-city-life-downtown-lifestyle-city-view-toronto-harbourfront-lake-ontario_t20_NGbYwp-2048x1536.jpg"
-              class="form-image" alt="Toronto Skyline">
+            <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                <div class="carousel-item active">
+                  <img src="https://bazis.ca/wp-content/uploads/2020/06/skyline-sailing-summer-city-life-downtown-lifestyle-city-view-toronto-harbourfront-lake-ontario_t20_NGbYwp-2048x1536.jpg" 
+                       class="d-block w-100" alt="Toronto Skyline">
+                </div>
+                <div class="carousel-item">
+                  <img src="https://epicexperiences.ca/wp-content/uploads/2021/12/Toronto-Night-Tour-main.jpg" 
+                       class="d-block w-100" alt="Toronto Night Tour">
+                </div>
+                <div class="carousel-item">
+                  <img src="https://a.travel-assets.com/findyours-php/viewfinder/images/res70/517000/517193-downtown-toronto.jpg" 
+                       class="d-block w-100" alt="Downtown Toronto">
+                </div>
+              </div>
+            </div>
           </div>
           <div class="col-md-6 d-flex align-items-center p-4">
             <div class="w-100">
@@ -199,6 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </div>
     </div>
   </section>
+
+  <script>
+    var myCarousel = new bootstrap.Carousel(document.getElementById('imageCarousel'), {
+      interval: 2500,
+      ride: 'carousel'
+    });
+  </script>
 </body>
 
 </html>
