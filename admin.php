@@ -384,10 +384,9 @@ foreach ($reports as $report) {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Cypress</title>
+    <title>Project Cypress - Admin Dashboard</title>
     <link rel="icon" type="image/x-icon" href="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/64/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png">
-    <link rel="stylesheet" href="style.css">
-
+    
     <!-- Leaflet CSS and JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -400,63 +399,119 @@ foreach ($reports as $report) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        html, body {
+        body {
+            background-color: #f8f9fa;
             margin: 0;
             padding: 0;
             width: 100%;
         }
 
-        #map {
-            height: 350px;
-            width: 75%;
-            margin: 0 auto;
-            display: block;
+        .navbar {
+            background-color: #4a90e2;
+            width: 100%;
+            margin: 0;
         }
 
-        .sign-out-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-
-        .center-content {
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
         }
 
-        .container {
-            margin-top: 20px;
+        .container-form {
+            max-width: 800px;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
         }
 
-        .navbar {
-            width: 100%;
-            margin: 0;
+        .btn-primary {
+            background-color: #4a90e2;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #357ab7;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border: none;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            border: none;
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 10px 10px 0 0;
         }
 
         .map-container {
             height: 200px;
             width: 100%;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        h2 {
+            color: #4a90e2;
         }
     </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-light p-2" style="background-color: #93B5E1;">
-        <h1>
-            <a class="navbar-brand link-dark font-bold fs-1 d-flex align-items-center" href="index.php">
-                <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark p-2">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">
+                <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo" height="40">
                 Project Cypress
             </a>
-        </h1>
-        <form method="post" action="index.php" class="d-flex">
-            <a href="index.php" class="btn btn-success me-2">User View</a>
-            <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
-        </form>
+            <form method="post" action="index.php" class="d-flex">
+                <a href="index.php" class="btn btn-success me-2">User View</a>
+                <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
+            </form>
+        </div>
     </nav>
 
-    <div class="container">
-        <h2 class="text-center my-4">Admin Problem Review</h2>
+    <div class="container-form">
+        <h2 class="text-center mb-4">Admin Problem Review Dashboard</h2>
 
         <!-- Filter Form -->
         <form method="GET" action="admin.php" class="row g-3 mb-4">
@@ -512,61 +567,21 @@ foreach ($reports as $report) {
                     
                     <div id="map-<?php echo htmlspecialchars($group['id']); ?>" class="map-container"></div>
                     <script>
-                        // Define custom icons based on problem type
-                        var customIcons = {
-                            "accident": L.icon({
-                                iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            }),
-                            "pothole": L.icon({
-                                iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            }),
-                            "construction": L.icon({
-                                iconUrl: 'https://img.icons8.com/color/100/crane.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            }),
-                            "crime": L.icon({
-                                iconUrl: 'https://img.icons8.com/color/100/pickpocket.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            }),
-                            "streetlight issue": L.icon({
-                                iconUrl: 'https://img.icons8.com/color/100/traffic-light.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            }),
-                            "other": L.icon({
-                                iconUrl: 'https://img.icons8.com/color/100/error--v1.png',
-                                iconSize: [50, 50],
-                                iconAnchor: [25, 50],
-                                popupAnchor: [0, -50]
-                            })
-                        };
-
-                        
                         var map<?php echo $group['id']; ?> = L.map('map-<?php echo $group['id']; ?>').setView([<?php echo $group['latitude']; ?>, <?php echo $group['longitude']; ?>], 13);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             maxZoom: 19,
                         }).addTo(map<?php echo $group['id']; ?>);
 
-                        
                         var problemType = "<?php echo strtolower($group['report_type']); ?>";
-                        var icon = customIcons[problemType] || L.icon({
-                            iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png', 
-                            iconSize: [30, 30],
-                            iconAnchor: [15, 30],
-                            popupAnchor: [0, -30]
-                        });
-
+                        var customIcons = {
+                            "accident": L.icon({iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]}),
+                            "pothole": L.icon({iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]}),
+                            "construction": L.icon({iconUrl: 'https://img.icons8.com/color/100/crane.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]}),
+                            "crime": L.icon({iconUrl: 'https://img.icons8.com/color/100/pickpocket.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]}),
+                            "streetlight issue": L.icon({iconUrl: 'https://img.icons8.com/color/100/traffic-light.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]}),
+                            "other": L.icon({iconUrl: 'https://img.icons8.com/color/100/error--v1.png', iconSize: [50, 50], iconAnchor: [25, 50], popupAnchor: [0, -50]})
+                        };
+                        var icon = customIcons[problemType] || L.icon({iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]});
                         L.marker([<?php echo $group['latitude']; ?>, <?php echo $group['longitude']; ?>], { icon: icon })
                             .addTo(map<?php echo $group['id']; ?>)
                             .bindPopup('<strong>Problem #<?php echo $group['id']; ?></strong><br><?php echo htmlspecialchars($group['description']); ?><br><strong>Status:</strong> <?php echo htmlspecialchars($group['status']); ?>')
@@ -625,184 +640,183 @@ foreach ($reports as $report) {
                         </div>
                     <?php endif; ?>
 
-                    <div class="mt-3 d-flex flex-wrap">
-                        <button class="btn btn-warning btn-sm me-1 mb-1" onclick="contactEmergencyService(<?php echo $group['id']; ?>)">Contact Emergency Service</button>
-                        <button class="btn btn-info btn-sm me-1 mb-1" onclick="contactCityService(<?php echo $group['id']; ?>)">Contact City Service</button>
-                        <button class="btn btn-primary btn-sm me-1 mb-1" onclick="setInProgress(<?php echo $group['id']; ?>)">Set In Progress</button>
-                        <button class="btn btn-success btn-sm me-1 mb-1" onclick="setResolved(<?php echo $group['id']; ?>)">Set Resolved</button>
-                        <button class="btn btn-danger btn-sm mb-1" onclick="deleteProblem(<?php echo $group['id']; ?>)">Delete</button>
+                    <div class="mt-3 d-flex flex-column flex-md-row gap-2">
+                        <button class="btn btn-warning" onclick="contactEmergencyService(<?php echo $group['id']; ?>)">Contact Emergency Service</button>
+                        <button class="btn btn-info" onclick="contactCityService(<?php echo $group['id']; ?>)">Contact City Service</button>
+                        <button class="btn btn-primary" onclick="setInProgress(<?php echo $group['id']; ?>)">Set In Progress</button>
+                        <button class="btn btn-success" onclick="setResolved(<?php echo $group['id']; ?>)">Set Resolved</button>
+                        <button class="btn btn-danger" onclick="deleteProblem(<?php echo $group['id']; ?>)">Delete</button>
                     </div>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
-
-    <script>
-
-        function setInProgress(id) {
-            fetch('admin.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    action: 'set_in_progress',
-                    problem_id: id
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        function setResolved(id) {
-            fetch('admin.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    action: 'set_resolved',
-                    problem_id: id
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        function deleteProblem(id) {
-            if (confirm(`Are you sure you want to delete Problem #${id}?`)) {
-                fetch('admin.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'delete',
-                        problem_id: id
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-
-        function handleDuplicates(mainId, duplicates) {
-            // Get the selected report to keep
-            const selectedReportId = document.querySelector(`input[name="keep_report_${mainId}"]:checked`).value;
-            
-            // Determine which reports to remove
-            let reportsToRemove = [];
-            
-            // If the main report is selected, remove all duplicates
-            if (selectedReportId == mainId) {
-                reportsToRemove = duplicates;
-            } 
-            // If a duplicate is selected, remove the main report and all other duplicates
-            else {
-                reportsToRemove.push(mainId);
-                duplicates.forEach(duplicateId => {
-                    if (duplicateId != selectedReportId) {
-                        reportsToRemove.push(duplicateId);
-                    }
-                });
-            }
-            
-            fetch('admin.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    action: 'accept_with_duplicates',
-                    problem_id: selectedReportId,
-                    duplicates: JSON.stringify(reportsToRemove)
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        function contactEmergencyService(reportId) {
-            if (confirm("Are you sure you want to contact Emergency Services for this problem?")) {
-                fetch('admin.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'contact_emergency',
-                        problem_id: reportId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-
-        function contactCityService(reportId) {
-            if (confirm("Are you sure you want to contact City Services for this problem?")) {
-                fetch('admin.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        action: 'contact_city_service',
-                        problem_id: reportId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-    </script>
 </body>
+
+<script>
+    function setInProgress(id) {
+        fetch('admin.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'set_in_progress',
+                problem_id: id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function setResolved(id) {
+        fetch('admin.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'set_resolved',
+                problem_id: id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function deleteProblem(id) {
+        if (confirm(`Are you sure you want to delete Problem #${id}?`)) {
+            fetch('admin.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'delete',
+                    problem_id: id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+
+    function handleDuplicates(mainId, duplicates) {
+        // Get the selected report to keep
+        const selectedReportId = document.querySelector(`input[name="keep_report_${mainId}"]:checked`).value;
+        
+        // Determine which reports to remove
+        let reportsToRemove = [];
+        
+        // If the main report is selected, remove all duplicates
+        if (selectedReportId == mainId) {
+            reportsToRemove = duplicates;
+        } 
+        // If a duplicate is selected, remove the main report and all other duplicates
+        else {
+            reportsToRemove.push(mainId);
+            duplicates.forEach(duplicateId => {
+                if (duplicateId != selectedReportId) {
+                    reportsToRemove.push(duplicateId);
+                }
+            });
+        }
+        
+        fetch('admin.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'accept_with_duplicates',
+                problem_id: selectedReportId,
+                duplicates: JSON.stringify(reportsToRemove)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function contactEmergencyService(reportId) {
+        if (confirm("Are you sure you want to contact Emergency Services for this problem?")) {
+            fetch('admin.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'contact_emergency',
+                    problem_id: reportId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+
+    function contactCityService(reportId) {
+        if (confirm("Are you sure you want to contact City Services for this problem?")) {
+            fetch('admin.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'contact_city_service',
+                    problem_id: reportId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+</script>
 </html>
