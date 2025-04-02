@@ -17,6 +17,24 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+
+if (isset($_GET['admin_mode'])) {
+    $query = "SELECT role FROM users WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($role);
+    $stmt->fetch();
+    $stmt->close();
+
+    if (strtolower($role) !== 'admin') {
+        echo "<script>alert('Access Denied: You must be an admin to access this mode.');</script>";
+    } else {
+        header('Location: admin.php');
+        exit();
+    }
+}
+
 // Function to send notification email
 function sendNotificationEmail($to_email, $report_details, $report_id) {
     try {
@@ -196,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Project Cypress
             </a>
             <div>
-                <a href="admin.php" class="btn btn-warning me-2">Admin Mode</a>
+            <a href="report.php?admin_mode=true" class="btn btn-warning me-2">Admin Mode</a>
                 <form method="post" action="index.php" class="d-inline">
                     <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
                 </form>

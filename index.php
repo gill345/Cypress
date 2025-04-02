@@ -14,10 +14,56 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
-$filter_type = isset($_GET['type']) ? $_GET['type'] : '';
-$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
-$filter_time = isset($_GET['time']) ? $_GET['time'] : '';
+if (isset($_GET['clear_filters'])) {
+    
+    setcookie('filter_status', '', time() - 3600, '/');
+    setcookie('filter_type', '', time() - 3600, '/');
+    setcookie('filter_urgency', '', time() - 3600, '/');
+    setcookie('filter_time', '', time() - 3600, '/');
+    
+    
+    header('Location: index.php');
+    exit();
+}
+
+$filter_status = isset($_GET['status']) ? $_GET['status'] : (isset($_COOKIE['filter_status']) ? $_COOKIE['filter_status'] : '');
+$filter_type = isset($_GET['type']) ? $_GET['type'] : (isset($_COOKIE['filter_type']) ? $_COOKIE['filter_type'] : '');
+$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : (isset($_COOKIE['filter_urgency']) ? $_COOKIE['filter_urgency'] : '');
+$filter_time = isset($_GET['time']) ? $_GET['time'] : (isset($_COOKIE['filter_time']) ? $_COOKIE['filter_time'] : '');
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (isset($_GET['status'])) {
+        setcookie('filter_status', $_GET['status'], time() + (30 * 24 * 60 * 60), '/');
+    }
+    if (isset($_GET['type'])) {
+        setcookie('filter_type', $_GET['type'], time() + (30 * 24 * 60 * 60), '/');
+    }
+    if (isset($_GET['urgency'])) {
+        setcookie('filter_urgency', $_GET['urgency'], time() + (30 * 24 * 60 * 60), '/');
+    }
+    if (isset($_GET['time'])) {
+        setcookie('filter_time', $_GET['time'], time() + (30 * 24 * 60 * 60), '/');
+    }
+}
+
+
+if (isset($_GET['admin_mode'])) {
+    $query = "SELECT role FROM users WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($role);
+    $stmt->fetch();
+    $stmt->close();
+
+    if (strtolower($role) !== 'admin') {
+        echo "<script>alert('Access Denied: You must be an admin to access this mode.');</script>";
+    } else {
+        header('Location: admin.php');
+        exit();
+    }
+}
 
 $query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE status != 'Submitted'";
 
@@ -147,7 +193,7 @@ while ($row = $result->fetch_assoc()) {
             </a>
         </h1>
         <form method="post" class="d-flex">
-            <a href="admin.php" class="btn btn-warning me-2">Admin Mode</a>
+            <a href="index.php?admin_mode=true" class="btn btn-warning me-2">Admin Mode</a>
             <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
         </form>
     </nav>
@@ -211,7 +257,7 @@ while ($row = $result->fetch_assoc()) {
             </div>
             <div class="col-12 text-center mt-3 pb-4">
                 <button type="submit" class="btn btn-success">Apply Filters</button>
-                <a href="index.php" class="btn btn-secondary">Clear Filters</a>
+                <a href="index.php?clear_filters=true" class="btn btn-secondary">Clear Filters</a>
             </div>
         </form>
     </div>
