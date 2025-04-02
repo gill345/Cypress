@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               src="https://bazis.ca/wp-content/uploads/2020/06/skyline-sailing-summer-city-life-downtown-lifestyle-city-view-toronto-harbourfront-lake-ontario_t20_NGbYwp-2048x1536.jpg"
               class="form-image" alt="Toronto Skyline">
           </div>
-          <div class="col-md-6 d-flex align-items-center p-4">
+          <div class="col-md-6 d-flex align-items-center p-5">
             <div class="w-100">
               <div class="text-center mb-3">
                 <a href="login.php">
@@ -155,8 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     alt="Cypress" width="100" height="60"> 
                 </a>
               </div>
-              <h2 class="text-center">Project Cypress</h2>
-              <p class="text-center text-muted">Please Sign Up Here</p>
+              <h2 class="text-center fs-3">Project Cypress</h2>
+              <p class="text-center text-muted fs-5">Please Sign Up Here</p>
               <form action="signup.php" method="POST">
                 <div class="mb-3">
                   <label for="name" class="form-label">Name</label>
