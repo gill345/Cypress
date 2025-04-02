@@ -18,7 +18,7 @@ $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_type = isset($_GET['type']) ? $_GET['type'] : '';
 $filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
 
-$query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE 1=1";
+$query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE status != 'Submitted'";
 
 if (!empty($filter_status)) {
     $query .= " AND status = '" . $conn->real_escape_string($filter_status) . "'";
@@ -61,6 +61,9 @@ while ($row = $result->fetch_assoc()) {
 
 <!-- Latest compiled JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzzFkw0-X4u1k8UmE3r3-XkdDKv7Ip-cg&libraries=places"></script>
+
 </head>
 
 <style>
@@ -96,6 +99,22 @@ while ($row = $result->fetch_assoc()) {
         width: 100%;
         margin: 0;
     }
+
+    .search-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto 20px auto;
+    }
+    
+    #location-search {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 </style>
 
 <body class="bg-light">
@@ -128,12 +147,14 @@ while ($row = $result->fetch_assoc()) {
     </div>
 
     <div class="container mt-4">
+        <div class="search-container">
+            <input type="text" id="location-search" class="form-control" placeholder="Search for a location...">
+        </div>
         <form method="GET" action="index.php" class="row g-3">
             <div class="col-md-4">
                 <label for="status" class="form-label">Filter by Status</label>
                 <select id="status" name="status" class="form-select">
                     <option value="">All</option>
-                    <option value="Submitted" <?php echo $filter_status === 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
                     <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
                     <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
                 </select>
@@ -171,74 +192,138 @@ while ($row = $result->fetch_assoc()) {
 
     <script>
         var map = L.map('map').setView([43.66127272915081, -79.38768514171629], 12);
+        var userLocationMarker = null;
+        var searchLocationMarker = null;
+        
+        // Initialize the map tiles
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-    var customIcons = {
-        "accident": L.icon({
-            iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        }),
-        "pothole": L.icon({
-            iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        }),
-        "construction": L.icon({
-            iconUrl: 'https://img.icons8.com/color/100/crane.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        }),
-        "crime": L.icon({
-            iconUrl: 'https://img.icons8.com/color/100/pickpocket.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        }),
-        "streetlight issue": L.icon({
-            iconUrl: 'https://img.icons8.com/color/100/traffic-light.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        }),
-        "other": L.icon({
-            iconUrl: 'https://img.icons8.com/color/100/error--v1.png',
-            iconSize: [50, 50],
-            iconAnchor: [25, 50],
-            popupAnchor: [0, -50]
-        })
-    };
-
-    var displayedReports = <?php echo json_encode($displayed_reports); ?>;
-
-    displayedReports.forEach(function(report) {
-        var icon = customIcons[report.report_type.toLowerCase()] || L.icon({
-            iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png',
-            iconSize: [30, 30],
-            iconAnchor: [15, 30],
-            popupAnchor: [0, -30]
+        // Initialize Google Places Autocomplete
+        const searchInput = document.getElementById('location-search');
+        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: "ca" },
+            fields: ["formatted_address", "geometry", "name"],
+            strictBounds: false,
+            types: ["geocode", "establishment"]
         });
 
-        var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
+        // Handle place selection
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            
+            if (!place.geometry) {
+                console.error("No location data for this place");
+                return;
+            }
+            
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            // Remove existing search marker if it exists
+            if (searchLocationMarker) {
+                map.removeLayer(searchLocationMarker);
+            }
+            
+            // Add red pin for searched location
+            searchLocationMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                })
+            }).addTo(map);
+            
+            // Center map on the selected location
+            map.setView([lat, lng], 15);
+        });
 
-        marker.bindTooltip(
-            `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}<br><strong>Urgency:</strong> ${report.urgency}<br><strong>Created At:</strong> ${report.created_at}`,
-            { permanent: false, direction: 'top' }
-        );
-    });
+        // Get user's location using browser's Geolocation API
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                
+                // Create blue dot for user's location
+                userLocationMarker = L.marker([userLat, userLng], {
+                    icon: L.divIcon({
+                        className: 'user-location-marker',
+                        html: '<div style="background-color: #2196F3; border: 2px solid white; border-radius: 50%; width: 15px; height: 15px; box-shadow: 0 0 3px rgba(0,0,0,0.3);"></div>'
+                    })
+                }).addTo(map);
+                
+                map.setView([userLat, userLng], 13);
+            });
+        }
 
-    map.on('click', function(e) {
-        var coords = e.latlng;
-        var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
-        window.location.href = url;
-    });
-    
+        // Custom icons setup
+        var customIcons = {
+            "accident": L.icon({
+                iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "pothole": L.icon({
+                iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "construction": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/crane.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "crime": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/pickpocket.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "streetlight issue": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/traffic-light.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "other": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/error--v1.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            })
+        };
+
+        var displayedReports = <?php echo json_encode($displayed_reports); ?>;
+        
+        // Display existing reports
+        displayedReports.forEach(function(report) {
+            var icon = customIcons[report.report_type.toLowerCase()] || L.icon({
+                iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30],
+                popupAnchor: [0, -30]
+            });
+
+            var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
+
+            marker.bindTooltip(
+                `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}<br><strong>Urgency:</strong> ${report.urgency}<br><strong>Created At:</strong> ${report.created_at}`,
+                { permanent: false, direction: 'top' }
+            );
+        });
+
+        // Map click handler
+        map.on('click', function(e) {
+            var coords = e.latlng;
+            var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
+            window.location.href = url;
+        });
     </script>
 </body>
 
