@@ -227,11 +227,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="latitude" class="form-label">Latitude</label>
-                        <input type="text" class="form-control" id="latitude" name="latitude" readonly>
+                        <input type="text" class="form-control" id="latitude" name="latitude" value="<?php echo $lat; ?>" readonly>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="longitude" class="form-label">Longitude</label>
-                        <input type="text" class="form-control" id="longitude" name="longitude" readonly>
+                        <input type="text" class="form-control" id="longitude" name="longitude" value="<?php echo $lng; ?>"readonly>
                     </div>
                 </div>
                 <div class="mb-3">
