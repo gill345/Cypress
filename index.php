@@ -129,7 +129,7 @@ while ($row = $result->fetch_assoc()) {
 
         .navbar {
             background: linear-gradient(to right, #0288d1, #0277bd);
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 2rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
@@ -139,7 +139,7 @@ while ($row = $result->fetch_assoc()) {
             font-weight: 600;
             display: flex;
             align-items: center;
-            margin-right: 1.5rem;
+            margin-right: 2rem;
             transition: transform 0.2s ease;
         }
 
@@ -151,17 +151,6 @@ while ($row = $result->fetch_assoc()) {
             margin-right: 8px;
             height: 32px;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-        }
-
-        .navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0;
-        }
-
-        .navbar form {
-            margin: 0;
         }
 
         .container {
@@ -329,10 +318,12 @@ while ($row = $result->fetch_assoc()) {
                 <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo">
                 Project Cypress
             </a>
-            <form method="post" class="d-flex gap-2">
-                <a href="index.php?admin_mode=true" class="btn btn-warning">Admin Mode</a>
-                <button type="submit" name="sign_out" class="btn btn-danger">Sign Out</button>
-            </form>
+            <div class="navbar-nav ms-auto">
+                <form method="post" class="d-flex gap-3 align-items-center">
+                    <a href="index.php?admin_mode=true" class="btn btn-warning px-4 py-2">Admin Mode</a>
+                    <button type="submit" name="sign_out" class="btn btn-danger px-4 py-2">Sign Out</button>
+                </form>
+            </div>
         </div>
     </nav>
 
@@ -346,10 +337,6 @@ while ($row = $result->fetch_assoc()) {
         <div class="text-center mb-4">
             <h1 class="h1 text-primary">Cypress</h1>
             <p class="h5">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
-        </div>
-
-        <div class="search-container">
-            <input type="text" id="location-search" class="form-control" placeholder="Search for a location...">
         </div>
 
         <form method="GET" action="index.php" class="row g-3 align-items-end">
@@ -393,10 +380,14 @@ while ($row = $result->fetch_assoc()) {
                 </select>
             </div>
             <div class="col-12 text-center mt-4">
-                <button type="submit" class="btn btn-success me-2">Apply Filters</button>
-                <a href="index.php?clear_filters=true" class="btn btn-secondary">Clear Filters</a>
+                <button type="submit" class="btn btn-success me-2 px-4 py-2">Apply Filters</button>
+                <a href="index.php?clear_filters=true" class="btn btn-secondary px-4 py-2">Clear Filters</a>
             </div>
         </form>
+
+        <div class="search-container mt-4">
+            <input type="text" id="location-search" class="form-control" placeholder="Search for a location...">
+        </div>
 
         <div class="center-content">
             <div id="map"></div>
