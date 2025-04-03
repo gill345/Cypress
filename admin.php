@@ -586,8 +586,8 @@ foreach ($reports as $report) {
             <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title">Problem #<?php echo htmlspecialchars($group['id']); ?></h5>
-                    <p class="card-text"><strong> Description:</strong> <?php echo htmlspecialchars($group['description']); ?></p>
-                    <p class="card-text"><strong> Type:</strong> 
+                    <p class="card-text"><strong>📝 Description:</strong> <?php echo htmlspecialchars($group['description']); ?></p>
+                    <p class="card-text"><strong>📂 Type:</strong> 
                         <?php 
                         switch (strtolower($group['report_type'])) {
                             case 'accident': echo '🚗 Accident'; break;
@@ -599,7 +599,7 @@ foreach ($reports as $report) {
                         }
                         ?>
                     </p>
-                    <p class="card-text"><strong> Status:</strong> 
+                    <p class="card-text"><strong>📊 Status:</strong> 
                         <?php 
                         switch (strtolower($group['status'])) {
                             case 'submitted': echo '📤 Submitted'; break;
@@ -609,7 +609,7 @@ foreach ($reports as $report) {
                         }
                         ?>
                     </p>
-                    <p class="card-text"><strong> Urgency:</strong> 
+                    <p class="card-text"><strong>⚠️ Urgency:</strong> 
                         <?php 
                         switch (strtolower($group['urgency'])) {
                             case 'low': echo '🟢 Low'; break;
@@ -619,11 +619,11 @@ foreach ($reports as $report) {
                         }
                         ?>
                     </p>
-                    <p class="card-text"><strong> Emergency Contacted:</strong> <?php echo $group['emergency_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
-                    <p class="card-text"><strong> City Service Contacted:</strong> <?php echo $group['city_service_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
-                    <p class="card-text"><strong> Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
-                    <p class="card-text"><strong> Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
-                    <p class="card-text"><strong> Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
+                    <p class="card-text"><strong>🚨 Emergency Contacted:</strong> <?php echo $group['emergency_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
+                    <p class="card-text"><strong>🏙️ City Service Contacted:</strong> <?php echo $group['city_service_contacted'] ? '✅ Yes' : '❌ No'; ?></p>
+                    <p class="card-text"><strong>📧 Contact Info:</strong> <?php echo htmlspecialchars($group['contact_info'] ?: 'N/A'); ?></p>
+                    <p class="card-text"><strong>👤 Submitted By:</strong> <?php echo htmlspecialchars($group['submitted_by'] ?: 'Unknown'); ?></p>
+                    <p class="card-text"><strong>⏰ Created At:</strong> <?php echo htmlspecialchars($group['created_at']); ?></p>
                     
                     <div id="map-<?php echo htmlspecialchars($group['id']); ?>" class="map-container"></div>
                     <script>
