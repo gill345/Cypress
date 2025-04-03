@@ -1,4 +1,6 @@
 <?php
+session_start(); // Ensure session is started for CAPTCHA validation
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     include 'db.php';
 
@@ -6,40 +8,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $security_question = $_POST['security_question'];
-    $security_answer = password_hash($_POST['security_answer'], PASSWORD_BCRYPT); 
+    $security_answer = password_hash($_POST['security_answer'], PASSWORD_BCRYPT);
 
-    $sql = "SELECT email FROM users WHERE email = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->store_result();
-
-    if ($stmt->num_rows > 0) {
-        echo "<script>
-                alert('Account with this email already exists! Login Instead');
-                window.location.href = 'login.php';
-              </script>";
-        $stmt->close();
-        exit;
-    }
-    $stmt->close();
-
-
-    $sql = "INSERT INTO users (name, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssss", $name, $email, $password, $security_question, $security_answer);
-
-    if ($stmt->execute()) {
-        echo "<script>
-                alert('Account created successfully! You can now login.');
-                window.location.href = 'login.php';
-              </script>";
+    
+    if (empty($_SESSION['captcha_code']) || strcasecmp($_SESSION['captcha_code'], $_POST['captcha_code']) != 0) {
+        $msg = "<span style='color:red'>The Validation code does not match!</span>";
     } else {
-        echo "Error: " . $stmt->error;
-    }
+        $msg = "<span style='color:green'>The Validation code has been matched.</span>";
 
-    $stmt->close();
-    $conn->close();
+        
+        $sql = "SELECT email FROM users WHERE email = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            echo "<script>
+                    alert('Account with this email already exists! Login Instead');
+                    window.location.href = 'login.php';
+                  </script>";
+            $stmt->close();
+            exit;
+        }
+        $stmt->close();
+
+        // Insert new user into the database
+        $sql = "INSERT INTO users (name, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssss", $name, $email, $password, $security_question, $security_answer);
+
+        if ($stmt->execute()) {
+            echo "<script>
+                    alert('Account created successfully! You can now login.');
+                    window.location.href = 'login.php';
+                  </script>";
+        } else {
+            echo "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
+        $conn->close();
+    }
 }
 ?>
 
@@ -202,8 +212,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   <label for="security_answer" class="form-label">Answer:</label>
                   <input type="text" name="security_answer" id="security_answer" class="form-control" required>
                 </div>
-                <div class="d-grid mb-3">
-                  <button class="btn btn-dark" type="submit">Sign up now</button>
+                <div class="mb-3">
+                    <?php if (isset($msg)) { ?>
+                        <div class="alert <?php echo strpos($msg, 'red') !== false ? 'alert-danger' : 'alert-success'; ?>" role="alert">
+                            <?php echo $msg; ?>
+                        </div>
+                    <?php } ?>
+                </div>
+                <div class="mb-3">
+                    <label for="captcha_code" class="form-label">Validation Code</label>
+                    <div class="d-flex align-items-center">
+                        <img src="captcha.php?rand=<?php echo rand(); ?>" id="captchaimg" class="border rounded me-3" style="height: 50px; width: 150px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="refreshCaptcha()">Refresh</button>
+                    </div>
+                    <input id="captcha_code" name="captcha_code" type="text" class="form-control mt-2" placeholder="Enter CAPTCHA code" required>
+                </div>
+                <div class="mb-3">
+                    <button name="Submit" type="submit" onclick="return validate();" class="btn btn-dark w-100">Sign Up</button>
                 </div>
               </form>
               <div class="text-center mt-4">
@@ -222,6 +247,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       interval: 2500,
       ride: 'carousel'
     });
+
+    function refreshCaptcha() {
+        document.getElementById('captchaimg').src = 'captcha.php?rand=' + Math.random();
+    }
+
+    function validate() {
+        const captchaCode = document.getElementById('captcha_code').value;
+        if (!captchaCode) {
+            alert('Please enter the CAPTCHA code.');
+            return false;
+        }
+        return true;
+    }
   </script>
 </body>
 
