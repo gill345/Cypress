@@ -2,7 +2,6 @@
 require_once 'db.php';
 session_start();
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sign_out'])) {
     session_destroy();
     header('Location: login.php');
@@ -15,12 +14,10 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if (isset($_GET['clear_filters'])) {
-    
     setcookie('filter_status', '', time() - 3600, '/');
     setcookie('filter_type', '', time() - 3600, '/');
     setcookie('filter_urgency', '', time() - 3600, '/');
     setcookie('filter_time', '', time() - 3600, '/');
-    
     
     header('Location: index.php');
     exit();
@@ -30,7 +27,6 @@ $filter_status = isset($_GET['status']) ? $_GET['status'] : (isset($_COOKIE['fil
 $filter_type = isset($_GET['type']) ? $_GET['type'] : (isset($_COOKIE['filter_type']) ? $_COOKIE['filter_type'] : '');
 $filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : (isset($_COOKIE['filter_urgency']) ? $_COOKIE['filter_urgency'] : '');
 $filter_time = isset($_GET['time']) ? $_GET['time'] : (isset($_COOKIE['filter_time']) ? $_COOKIE['filter_time'] : '');
-
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['status'])) {
@@ -46,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         setcookie('filter_time', $_GET['time'], time() + (30 * 24 * 60 * 60), '/');
     }
 }
-
 
 if (isset($_GET['admin_mode'])) {
     $query = "SELECT role FROM users WHERE id = ?";
@@ -134,16 +129,17 @@ while ($row = $result->fetch_assoc()) {
 
         .navbar {
             background: linear-gradient(to right, #0288d1, #0277bd);
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .navbar-brand {
             color: #fff !important;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 600;
             display: flex;
             align-items: center;
+            margin-right: 1.5rem;
             transition: transform 0.2s ease;
         }
 
@@ -152,8 +148,20 @@ while ($row = $result->fetch_assoc()) {
         }
 
         .navbar-brand img {
-            margin-right: 10px;
+            margin-right: 8px;
+            height: 32px;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0;
+        }
+
+        .navbar form {
+            margin: 0;
         }
 
         .container {
@@ -181,7 +189,7 @@ while ($row = $result->fetch_assoc()) {
 
         .btn {
             border-radius: 30px;
-            padding: 10px 25px;
+            padding: 8px 20px;
             font-weight: 500;
             transition: all 0.3s ease;
         }
@@ -305,13 +313,20 @@ while ($row = $result->fetch_assoc()) {
             font-weight: 500;
             color: #37474f;
         }
+
+        .center-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="index.php">
-                <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo" height="40">
+                <img src="https://img.icons8.com/external-flatart-icons-lineal-color-flatarticons/100/external-cn-tower-canada-independence-day-flatart-icons-lineal-color-flatarticons.png" alt="Logo">
                 Project Cypress
             </a>
             <form method="post" class="d-flex gap-2">
@@ -383,7 +398,145 @@ while ($row = $result->fetch_assoc()) {
             </div>
         </form>
 
-        <div id="map"></div>
+        <div class="center-content">
+            <div id="map"></div>
+        </div>
     </div>
+
+    <script>
+        var map = L.map('map').setView([43.66127272915081, -79.38768514171629], 12);
+        var userLocationMarker = null;
+        var searchLocationMarker = null;
+        
+        // Initialize the map tiles
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Initialize Google Places Autocomplete
+        const searchInput = document.getElementById('location-search');
+        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: "ca" },
+            fields: ["formatted_address", "geometry", "name"],
+            strictBounds: false,
+            types: ["geocode", "establishment"]
+        });
+
+        // Handle place selection
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            
+            if (!place.geometry) {
+                console.error("No location data for this place");
+                return;
+            }
+            
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            // Remove existing search marker if it exists
+            if (searchLocationMarker) {
+                map.removeLayer(searchLocationMarker);
+            }
+            
+            // Add red pin for searched location
+            searchLocationMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34]
+                })
+            }).addTo(map);
+            
+            // Center map on the selected location
+            map.setView([lat, lng], 15);
+        });
+
+        // Get user's location using browser's Geolocation API
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                
+                // Create blue dot for user's location
+                userLocationMarker = L.marker([userLat, userLng], {
+                    icon: L.divIcon({
+                        className: 'user-location-marker',
+                        html: '<div style="background-color: #2196F3; border: 2px solid white; border-radius: 50%; width: 15px; height: 15px; box-shadow: 0 0 3px rgba(0,0,0,0.3);"></div>'
+                    })
+                }).addTo(map);
+                
+                map.setView([userLat, userLng], 13);
+            });
+        }
+
+        // Custom icons setup
+        var customIcons = {
+            "accident": L.icon({
+                iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "pothole": L.icon({
+                iconUrl: 'https://img.icons8.com/external-filled-outline-chattapat-/100/external-accident-car-accident-filled-outline-chattapat-.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "construction": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/crane.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "crime": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/pickpocket.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "streetlight issue": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/traffic-light.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            }),
+            "other": L.icon({
+                iconUrl: 'https://img.icons8.com/color/100/error--v1.png',
+                iconSize: [50, 50],
+                iconAnchor: [25, 50],
+                popupAnchor: [0, -50]
+            })
+        };
+
+        var displayedReports = <?php echo json_encode($displayed_reports); ?>;
+        
+        // Display existing reports
+        displayedReports.forEach(function(report) {
+            var icon = customIcons[report.report_type.toLowerCase()] || L.icon({
+                iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30],
+                popupAnchor: [0, -30]
+            });
+
+            var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
+
+            marker.bindTooltip(
+                `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}<br><strong>Urgency:</strong> ${report.urgency}<br><strong>Created At:</strong> ${report.created_at}`,
+                { permanent: false, direction: 'top' }
+            );
+        });
+
+        // Map click handler
+        map.on('click', function(e) {
+            var coords = e.latlng;
+            var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
+            window.location.href = url;
+        });
+    </script>
 </body>
 </html>
