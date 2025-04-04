@@ -135,6 +135,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $report_id = $conn->insert_id; // Get the ID of the newly inserted report
         $stmt->close();
+
+        // Add subscription entry if notifications are enabled
+        if ($subscribe_notifications) {
+            $notification_email = !empty($contact_info) && filter_var($contact_info, FILTER_VALIDATE_EMAIL) 
+                ? $contact_info 
+                : $user_email;
+
+            $subscription_query = "INSERT INTO report_subscriptions (report_id, user_id, email) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($subscription_query);
+            $stmt->bind_param("iis", $report_id, $user_id, $notification_email);
+            
+            if (!$stmt->execute()) {
+                error_log("Failed to create subscription entry: " . $stmt->error);
+                // Continue with the submission even if subscription entry fails
+            }
+            $stmt->close();
+        }
+
         // Send notification email if subscribed
         if ($subscribe_notifications) {
             $report_details = [
@@ -144,11 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'longitude' => $longitude,
                 'urgency' => $urgency
             ];
-
-            // Use contact info email if provided, otherwise use user's email
-            $notification_email = !empty($contact_info) && filter_var($contact_info, FILTER_VALIDATE_EMAIL) 
-                ? $contact_info 
-                : $user_email;
 
             if ($notification_email) {
                 $email_sent = sendNotificationEmail($notification_email, $report_details, $report_id);

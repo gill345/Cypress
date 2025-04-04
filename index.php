@@ -18,15 +18,26 @@ if (isset($_GET['clear_filters'])) {
     setcookie('filter_type', '', time() - 3600, '/');
     setcookie('filter_urgency', '', time() - 3600, '/');
     setcookie('filter_time', '', time() - 3600, '/');
+    setcookie('filter_subscription', '', time() - 3600, '/');
     
     header('Location: index.php');
     exit();
 }
 
-$filter_status = isset($_GET['status']) ? $_GET['status'] : (isset($_COOKIE['filter_status']) ? $_COOKIE['filter_status'] : '');
-$filter_type = isset($_GET['type']) ? $_GET['type'] : (isset($_COOKIE['filter_type']) ? $_COOKIE['filter_type'] : '');
-$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : (isset($_COOKIE['filter_urgency']) ? $_COOKIE['filter_urgency'] : '');
-$filter_time = isset($_GET['time']) ? $_GET['time'] : (isset($_COOKIE['filter_time']) ? $_COOKIE['filter_time'] : '');
+// Reset filters if page is refreshed (no GET parameters)
+if (empty($_GET) || (count($_GET) === 1 && isset($_GET['report']))) {
+    setcookie('filter_status', '', time() - 3600, '/');
+    setcookie('filter_type', '', time() - 3600, '/');
+    setcookie('filter_urgency', '', time() - 3600, '/');
+    setcookie('filter_time', '', time() - 3600, '/');
+    setcookie('filter_subscription', '', time() - 3600, '/');
+}
+
+$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$filter_type = isset($_GET['type']) ? $_GET['type'] : '';
+$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
+$filter_time = isset($_GET['time']) ? $_GET['time'] : '';
+$filter_subscription = isset($_GET['subscription']) ? $_GET['subscription'] : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['status'])) {
@@ -40,6 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     if (isset($_GET['time'])) {
         setcookie('filter_time', $_GET['time'], time() + (30 * 24 * 60 * 60), '/');
+    }
+    if (isset($_GET['subscription'])) {
+        setcookie('filter_subscription', $_GET['subscription'], time() + (30 * 24 * 60 * 60), '/');
     }
 }
 
@@ -60,42 +74,69 @@ if (isset($_GET['admin_mode'])) {
     }
 }
 
-$query = "SELECT id, description, report_type, latitude, longitude, status, created_at, urgency FROM city_reports WHERE status != 'Submitted'";
+$query = "SELECT cr.id, cr.description, cr.report_type, cr.latitude, cr.longitude, cr.status, 
+          cr.created_at, cr.urgency, cr.user_id, cr.contact_info, u.email as user_email,
+          (SELECT COUNT(*) FROM report_subscriptions rs WHERE rs.report_id = cr.id AND rs.user_id = ?) as is_subscribed
+          FROM city_reports cr 
+          LEFT JOIN users u ON cr.user_id = u.id 
+          WHERE cr.status != 'Submitted'";
 
 if (!empty($filter_status)) {
-    $query .= " AND status = '" . $conn->real_escape_string($filter_status) . "'";
+    $query .= " AND cr.status = '" . $conn->real_escape_string($filter_status) . "'";
 }
 if (!empty($filter_type)) {
-    $query .= " AND report_type = '" . $conn->real_escape_string($filter_type) . "'";
+    $query .= " AND cr.report_type = '" . $conn->real_escape_string($filter_type) . "'";
 }
 if (!empty($filter_urgency)) {
-    $query .= " AND urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+    $query .= " AND cr.urgency = '" . $conn->real_escape_string($filter_urgency) . "'";
+}
+if (!empty($filter_subscription)) {
+    if ($filter_subscription === 'subscribed') {
+        $query .= " AND EXISTS (SELECT 1 FROM report_subscriptions rs WHERE rs.report_id = cr.id AND rs.user_id = ?)";
+    } else if ($filter_subscription === 'unsubscribed') {
+        $query .= " AND NOT EXISTS (SELECT 1 FROM report_subscriptions rs WHERE rs.report_id = cr.id AND rs.user_id = ?)";
+    }
 }
 if (!empty($filter_time)) {
     $time_condition = '';
     switch ($filter_time) {
         case 'last_hour':
-            $time_condition = "AND created_at >= NOW() - INTERVAL 1 HOUR";
+            $time_condition = "AND cr.created_at >= NOW() - INTERVAL 1 HOUR";
             break;
         case 'last_day':
-            $time_condition = "AND created_at >= NOW() - INTERVAL 1 DAY";
+            $time_condition = "AND cr.created_at >= NOW() - INTERVAL 1 DAY";
             break;
         case 'last_week':
-            $time_condition = "AND created_at >= NOW() - INTERVAL 1 WEEK";
+            $time_condition = "AND cr.created_at >= NOW() - INTERVAL 1 WEEK";
             break;
         case 'last_month':
-            $time_condition = "AND created_at >= NOW() - INTERVAL 1 MONTH";
+            $time_condition = "AND cr.created_at >= NOW() - INTERVAL 1 MONTH";
             break;
     }
     $query .= " $time_condition";
 }
 
-$result = $conn->query($query);
+$stmt = $conn->prepare($query);
+
+// Bind parameters based on subscription filter
+if (!empty($filter_subscription)) {
+    if ($filter_subscription === 'subscribed') {
+        $stmt->bind_param("ii", $_SESSION['user_id'], $_SESSION['user_id']);
+    } else if ($filter_subscription === 'unsubscribed') {
+        $stmt->bind_param("ii", $_SESSION['user_id'], $_SESSION['user_id']);
+    }
+} else {
+    $stmt->bind_param("i", $_SESSION['user_id']);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 
 $displayed_reports = [];
 while ($row = $result->fetch_assoc()) {
     $displayed_reports[] = $row;
 }
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -309,6 +350,46 @@ while ($row = $result->fetch_assoc()) {
             align-items: center;
             padding: 20px 0;
         }
+
+        .filter-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 180px;
+        }
+        .filter-group .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        .filter-group .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 0.9rem;
+        }
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -339,49 +420,59 @@ while ($row = $result->fetch_assoc()) {
             <p class="h5">Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.</p>
         </div>
 
-        <form method="GET" action="index.php" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label for="status" class="form-label">Status</label>
-                <select id="status" name="status" class="form-select">
-                    <option value="">All</option>
-                    <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
-                    <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
-                </select>
+        <form method="GET" action="index.php" class="filter-form mb-4">
+            <div class="filter-container">
+                <div class="filter-group">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">All</option>
+                        <option value="In Progress" <?php echo $filter_status === 'In Progress' ? 'selected' : ''; ?>>In Progress</option>
+                        <option value="Resolved" <?php echo $filter_status === 'Resolved' ? 'selected' : ''; ?>>Resolved</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="type" class="form-label">Type</label>
+                    <select id="type" name="type" class="form-select">
+                        <option value="">All</option>
+                        <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
+                        <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
+                        <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
+                        <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
+                        <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
+                        <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="urgency" class="form-label">Urgency</label>
+                    <select id="urgency" name="urgency" class="form-select">
+                        <option value="">All</option>
+                        <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
+                        <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
+                        <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="time" class="form-label">Time</label>
+                    <select id="time" name="time" class="form-select">
+                        <option value="">All</option>
+                        <option value="last_hour" <?php echo $filter_time === 'last_hour' ? 'selected' : ''; ?>>Last Hour</option>
+                        <option value="last_day" <?php echo $filter_time === 'last_day' ? 'selected' : ''; ?>>Last Day</option>
+                        <option value="last_week" <?php echo $filter_time === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
+                        <option value="last_month" <?php echo $filter_time === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="subscription" class="form-label">Notification Status</label>
+                    <select id="subscription" name="subscription" class="form-select">
+                        <option value="" selected>All</option>
+                        <option value="subscribed" <?php echo $filter_subscription === 'subscribed' ? 'selected' : ''; ?>>Subscribed</option>
+                        <option value="unsubscribed" <?php echo $filter_subscription === 'unsubscribed' ? 'selected' : ''; ?>>Unsubscribed</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-3">
-                <label for="type" class="form-label">Type</label>
-                <select id="type" name="type" class="form-select">
-                    <option value="">All</option>
-                    <option value="Accident" <?php echo $filter_type === 'Accident' ? 'selected' : ''; ?>>Accident</option>
-                    <option value="Crime" <?php echo $filter_type === 'Crime' ? 'selected' : ''; ?>>Crime</option>
-                    <option value="Construction" <?php echo $filter_type === 'Construction' ? 'selected' : ''; ?>>Construction</option>
-                    <option value="Pothole" <?php echo $filter_type === 'Pothole' ? 'selected' : ''; ?>>Pothole</option>
-                    <option value="Streetlight Issue" <?php echo $filter_type === 'Streetlight Issue' ? 'selected' : ''; ?>>Streetlight Issue</option>
-                    <option value="Other" <?php echo $filter_type === 'Other' ? 'selected' : ''; ?>>Other</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="urgency" class="form-label">Urgency</label>
-                <select id="urgency" name="urgency" class="form-select">
-                    <option value="">All</option>
-                    <option value="Low" <?php echo $filter_urgency === 'Low' ? 'selected' : ''; ?>>Low</option>
-                    <option value="Medium" <?php echo $filter_urgency === 'Medium' ? 'selected' : ''; ?>>Medium</option>
-                    <option value="High" <?php echo $filter_urgency === 'High' ? 'selected' : ''; ?>>High</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="time" class="form-label">Time</label>
-                <select id="time" name="time" class="form-select">
-                    <option value="">All</option>
-                    <option value="last_hour" <?php echo $filter_time === 'last_hour' ? 'selected' : ''; ?>>Last Hour</option>
-                    <option value="last_day" <?php echo $filter_time === 'last_day' ? 'selected' : ''; ?>>Last Day</option>
-                    <option value="last_week" <?php echo $filter_time === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
-                    <option value="last_month" <?php echo $filter_time === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
-                </select>
-            </div>
-            <div class="col-12 text-center mt-4">
-                <button type="submit" class="btn btn-success me-2 px-4 py-2">Apply Filters</button>
-                <a href="index.php?clear_filters=true" class="btn btn-secondary px-4 py-2">Clear Filters</a>
+            <div class="filter-buttons">
+                <button type="submit" class="btn btn-success me-2">Apply Filters</button>
+                <a href="index.php?clear_filters=true" class="btn btn-secondary">Clear Filters</a>
             </div>
         </form>
 
@@ -516,9 +607,31 @@ while ($row = $result->fetch_assoc()) {
 
             var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
 
-            marker.bindTooltip(
-                `<strong>Problem #${report.id}</strong><br>${report.description}<br><strong>Type:</strong> ${report.report_type}<br><strong>Status:</strong> ${report.status}<br><strong>Urgency:</strong> ${report.urgency}<br><strong>Created At:</strong> ${report.created_at}`,
-                { permanent: false, direction: 'top' }
+            // Add a simple tooltip for hover preview
+            marker.bindTooltip(`Problem #${report.id}: ${report.description}`, { 
+                permanent: false, 
+                direction: 'top',
+                offset: [0, -30]
+            });
+
+            // Add detailed popup that opens on click
+            marker.bindPopup(
+                `<strong>Problem #${report.id}</strong><br>
+                ${report.description}<br>
+                <strong>Type:</strong> ${report.report_type}<br>
+                <strong>Status:</strong> ${report.status}<br>
+                <strong>Urgency:</strong> ${report.urgency}<br>
+                <strong>Created At:</strong> ${report.created_at}<br>
+                <strong>Notification:</strong> 
+                <button class="btn btn-sm ${report.is_subscribed > 0 ? 'btn-danger' : 'btn-success'}" 
+                        onclick="toggleNotification(${report.id}, ${report.is_subscribed > 0}, '${report.user_email}', '${report.contact_info}')">
+                    ${report.is_subscribed > 0 ? 'Unsubscribe' : 'Subscribe'}
+                </button>`,
+                { 
+                    closeButton: true,
+                    closeOnClick: true,
+                    autoClose: false
+                }
             );
         });
 
@@ -528,6 +641,56 @@ while ($row = $result->fetch_assoc()) {
             var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
             window.location.href = url;
         });
+
+        function toggleNotification(reportId, currentStatus, userEmail, contactInfo) {
+            if (!currentStatus) {
+                // If not subscribed, show email input dialog
+                const email = prompt("Enter email for notifications:", contactInfo || userEmail || "");
+                if (!email) return; // User cancelled
+                
+                if (!validateEmail(email)) {
+                    alert("Please enter a valid email address");
+                    return;
+                }
+                
+                updateSubscription(reportId, true, email);
+            } else {
+                // If already subscribed, confirm unsubscribe
+                if (confirm("Are you sure you want to unsubscribe from notifications for this problem?")) {
+                    updateSubscription(reportId, false);
+                }
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function updateSubscription(reportId, subscribe, email = null) {
+            const formData = new FormData();
+            formData.append('action', 'update_subscription');
+            formData.append('report_id', reportId);
+            formData.append('subscribe', subscribe ? 1 : 0);
+            if (email) formData.append('email', email);
+
+            fetch('update_subscription.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh to update the UI
+                } else {
+                    alert(data.message || 'Failed to update subscription');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update subscription');
+            });
+        }
     </script>
 </body>
 </html>

@@ -34,36 +34,36 @@ function sendStatusNotification($report_id, $status, $recipient_email) {
         
         switch ($status) {
             case 'In Progress':
-                $mail->Subject = 'Your Report #' . $report_id . ' is Now In Progress - Cypress';
+                $mail->Subject = 'Report #' . $report_id . ' is Now In Progress - Cypress';
                 $mail->Body = "
-                    <h2>Your Report #$report_id is Now Being Processed!</h2>
-                    <p>Good news! Our team has reviewed your report and we are now actively working on addressing the issue.</p>
-                    <p>We will keep you updated on any further developments.</p>
+                    <h2>Report #$report_id is Now Being Processed!</h2>
+                    <p>The report has been reviewed and work is now actively underway to address the issue.</p>
+                    <p>Further updates will be provided as progress continues.</p>
                     <p>Thank you for helping make our city better!</p>
                     <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
                 ";
                 break;
                 
             case 'Resolved':
-                $mail->Subject = 'Your Report #' . $report_id . ' Has Been Resolved - Cypress';
+                $mail->Subject = 'Report #' . $report_id . ' Has Been Resolved - Cypress';
                 $mail->Body = "
-                    <h2>Your Report #$report_id Has Been Successfully Resolved!</h2>
-                    <p>We're pleased to inform you that the issue you reported has been completely resolved.</p>
-                    <p>Thank you for your valuable contribution to improving our community!</p>
-                    <p>If you notice any other issues in the future, please don't hesitate to submit another report.</p>
+                    <h2>Report #$report_id Has Been Successfully Resolved!</h2>
+                    <p>The reported issue has been completely taken care of.</p>
+                    <p>Thank you for contributing to the improvement of our community!</p>
+                    <p>For any future issues you may notice, please feel free to submit additional reports through Cypress.</p>
                     <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
                 ";
                 break;
                 
             case 'Deleted':
             case 'Duplicates Removed':
-                $mail->Subject = 'Update Regarding Your Report #' . $report_id . ' - Cypress';
+                $mail->Subject = 'Update Regarding Report #' . $report_id . ' - Cypress';
                 $mail->Body = "
                     <h2>Important Update About Your Report #$report_id</h2>
                     <p>We will no longer be proceeding further with this report anymore and have it removed from our system.</p>
                     <p>This could be due to various reasons such as inappropiate information, duplicate reports, issue being outside our jurisdiction or has been resolved.</p>
-                    <p>We appreciate your time and effort in bringing this matter to our attention.</p>
-                    <p>Please feel free to submit new reports for other issues in the future.</p>
+                    <p>Thank you for your time and effort in bringing this matter to our attention.</p>
+                    <p>The Cypress platform remains available for submitting new reports about other community issues.</p>
                     <p><small>This is an automated message from the Cypress Report System. Please do not reply to this email.</small></p>
                 ";
                 break;
@@ -75,6 +75,24 @@ function sendStatusNotification($report_id, $status, $recipient_email) {
         error_log("Email sending failed: {$mail->ErrorInfo}");
         return false;
     }
+}
+
+// Function to notify all subscribers of a report
+function notifyAllSubscribers($report_id, $status) {
+    global $conn;
+    
+    // Get all subscribers for this report
+    $query = "SELECT email FROM report_subscriptions WHERE report_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $report_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($subscriber = $result->fetch_assoc()) {
+        sendStatusNotification($report_id, $status, $subscriber['email']);
+    }
+    
+    $stmt->close();
 }
 
 $query = "SELECT role FROM users WHERE id = ?";
@@ -126,29 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
             
-            // Get user email for notification
-            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
-                           FROM city_reports cr 
-                           LEFT JOIN users u ON cr.user_id = u.id 
-                           WHERE cr.id = ?";
-            $stmt = $conn->prepare($email_query);
-            $stmt->bind_param("i", $problem_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user_data = $result->fetch_assoc();
-            $stmt->close();
-            
-            // Send notification if user has opted in
-            if ($user_data && $user_data['notify_updates']) {
-                // Use contact info email if provided, otherwise use user's email
-                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
-                    ? $user_data['contact_info'] 
-                    : $user_data['email'];
-                
-                if ($notification_email) {
-                    sendStatusNotification($problem_id, $new_status, $notification_email);
-                }
-            }
+            // Notify all subscribers
+            notifyAllSubscribers($problem_id, $new_status);
             
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
             exit();
@@ -162,46 +159,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
             
-            // Get user email for notification
-            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
-                           FROM city_reports cr 
-                           LEFT JOIN users u ON cr.user_id = u.id 
-                           WHERE cr.id = ?";
-            $stmt = $conn->prepare($email_query);
-            $stmt->bind_param("i", $problem_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user_data = $result->fetch_assoc();
-            $stmt->close();
-            
-            // Send notification if user has opted in
-            if ($user_data && $user_data['notify_updates']) {
-                // Use contact info email if provided, otherwise use user's email
-                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
-                    ? $user_data['contact_info'] 
-                    : $user_data['email'];
-                
-                if ($notification_email) {
-                    sendStatusNotification($problem_id, $new_status, $notification_email);
-                }
-            }
+            // Notify all subscribers
+            notifyAllSubscribers($problem_id, $new_status);
             
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
             exit();
         }
 
         if ($action === 'delete') {
-            // Get user email for notification before deleting
-            $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
-                           FROM city_reports cr 
-                           LEFT JOIN users u ON cr.user_id = u.id 
-                           WHERE cr.id = ?";
-            $stmt = $conn->prepare($email_query);
-            $stmt->bind_param("i", $problem_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user_data = $result->fetch_assoc();
-            $stmt->close();
+            // Notify all subscribers before deleting
+            notifyAllSubscribers($problem_id, 'Deleted');
             
             // Delete the report
             $delete_query = "DELETE FROM city_reports WHERE id = ?";
@@ -209,18 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("i", $problem_id);
             $stmt->execute();
             $stmt->close();
-            
-            // Send notification if user has opted in
-            if ($user_data && $user_data['notify_updates']) {
-                // Use contact info email if provided, otherwise use user's email
-                $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
-                    ? $user_data['contact_info'] 
-                    : $user_data['email'];
-                
-                if ($notification_email) {
-                    sendStatusNotification($problem_id, 'Deleted', $notification_email);
-                }
-            }
             
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id has been deleted"]);
             exit();
