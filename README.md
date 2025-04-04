@@ -36,7 +36,7 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 2. Set up a MySQL database and import the provided SQL schema.
 3. Configure the database connection in `db.php`.
 4. Ensure you have PHP and a web server (like XAMPP, or InfinityFree) installed.
-5. Get a Google Map API Key for map searching functionality.
+5. Get a Google Map API Key for map searching functionality. (Enable Places API and Maps Javascript API)
 6. For Mail Functionality setup SMTP variables in required files: `index.php`, `report.php`, `admin.php`
 7. Start the server and access the application via the browser.
 
