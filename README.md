@@ -9,17 +9,18 @@ Cypress is a community-driven platform for reporting and tracking public issues 
   - Passwords and Security Question Answers are hashed for secure storage.
   - A Captcha prevents bots from signing up.
 - **Report a Problem To Admins**:
-  - Users can click on a place on the map, choose the problem type, set urgency level and add a description.
-  - Optional contact information for notifications.
+  - Users can search/navigate a place on the map.
+  - Inform a brief description, select the problem type and identify its urgency level.
+  - Optional contact information for notifications through email.
 - **Admin Report Verification**:
   - Admins can review, update status, and delete reports from a unique dashboard.
   - Ability to mark emergency services or city services as contacted.
 - **Filter out Duplicate Reports**:
   - System analyzes distance and report types to determine duplicate reports.
-  - Admins are able to remove duplicate reports and accept a single report with the click of a button.
+  - Admins are able to remove all duplicate reports and accept a single report with the click of a button.
 - **View Reports**:
   - Users can view all in progress and recently resolved reports on an interactive map.
-  - Advanced filtering system with filters by type, status, urgency, time and notification.
+  - Advanced filtering system with filters by type, status, urgency, time and notification subscription.
   - Filters set are saved up to a month using a cookie.
 - **Subscribe to Reports**:
   - Users can subscribe to reports on the map or upon submission and receive emails on updates to problem status.
