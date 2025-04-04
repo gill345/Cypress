@@ -23,7 +23,7 @@ Cypress is a community-driven platform for reporting and tracking public issues 
   - Advanced filtering system with filters by type, status, urgency, time and notification subscription.
   - Filters set are saved up to a month using a cookie.
 - **Subscribe to Reports**:
-  - Users can subscribe to reports on the map or upon submission and receive emails on updates to problem status.
+  - Users can subscribe to reports upon submission or directly on map (if they forgot to during the submission!) and receive emails on updates to problem status.
 - **Responsive Design**: Works on various devices, ie. Phone, Laptop, Desktop, etc. 
 
 ## Technologies Used
@@ -43,7 +43,7 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 ## Database Structure
 - **Users:** Stores user information (`id`, `name`, `email`, `password`, `role`, `created_at`, `security_question`, `security_answer`).
 - **City_Reports:** Stores user reports (`id`, `user_id`, `description`, `report_type`, `latitude`, `longitude`, `contact_info`, `created_at`, `status`, `urgency`, `notify_updates`, `emergency_contacted`, `city_service_contacted`).
-- **Report_Subscriptions:** Manages notification subscriptions (`id`, `report_id`, `user_id`, `email`, `created_at`)
+- **Report_Subscriptions:** Manages notification subscriptions from the popups (`id`, `report_id`, `user_id`, `email`, `created_at`)
 
 
 ## Future Enhancements
