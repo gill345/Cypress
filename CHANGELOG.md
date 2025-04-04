@@ -6,22 +6,37 @@
 - Notification status filtering
 - Improved email content for notifications
 
-## DETAILED UPDATES
+## DETAILED UPDATES (Run these SQL queries in phpMyAdmin)
 
 #### setup_subscriptions.php ( new file )
-- Creates new `report_subscriptions` table for multi-user notifications
-- **Action Required**: Run this file first to create the new table structure
-```php
-// Run in order:
-php setup_subscriptions.php
+```sql
+CREATE TABLE IF NOT EXISTS report_subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id INT NOT NULL,
+    user_id INT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (report_id) REFERENCES city_reports(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_subscription (report_id, user_id)
+);
 ```
 #### migrate_existing_subscriptions.php ( new file )
-- Transfers data from `notify_updates` column to new table
-- **Action Required**: Run after setup_subscriptions.php
-```php
-// Run after setup_subscriptions.php:
-php migrate_existing_subscriptions.php
+```sql
+INSERT INTO report_subscriptions (report_id, user_id, email)
+SELECT 
+    cr.id as report_id,
+    cr.user_id,
+    CASE 
+        WHEN cr.contact_info != '' AND cr.contact_info REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+        THEN cr.contact_info
+        ELSE u.email
+    END as email
+FROM city_reports cr
+JOIN users u ON cr.user_id = u.id
+WHERE cr.notify_updates = 1;
 ```
+
 #### update_subscription.php ( new file )
 - New file for handling subscription update through popups 
 - Manages subscribe/unsubscribe actions
@@ -45,11 +60,9 @@ php migrate_existing_subscriptions.php
 
 ## SET UP INSTRUCTIONS ( MERGE ORDER )
 
-1. Run database migrations in order:
-   ```bash
-   php setup_subscriptions.php
-   php migrate_existing_subscriptions.php
-   ```
+1. Run the SQL queries in phpMyAdmin in order:
+   - First create the `report_subscriptions` table
+   - Then run the migration query to transfer existing subscriptions
 2. Verify the `report_subscriptions` table is created
 3. Check existing subscriptions are migrated correctly ( report with notification subscriptions should go here )
 

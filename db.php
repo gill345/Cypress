@@ -1,8 +1,8 @@
 <?php
-    $host = 'sql309.infinityfree.com';
-    $user = 'if0_38581672';
-    $pass = 'TTmXtGSSKgU3';
-    $name = 'if0_38581672_cypress';
+    $host = "localhost";
+    $user = "stephen";
+    $pass = "admin123";
+    $name = "cypress"; 
 
     $conn = mysqli_connect($host, $user, $pass, $name);
 
