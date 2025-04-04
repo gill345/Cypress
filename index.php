@@ -1,4 +1,5 @@
 <?php
+// Ensure no output before this point
 require_once 'db.php';
 session_start();
 
@@ -14,46 +15,46 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if (isset($_GET['clear_filters'])) {
-    setcookie('filter_status', '', time() - 3600, '/');
-    setcookie('filter_type', '', time() - 3600, '/');
-    setcookie('filter_urgency', '', time() - 3600, '/');
-    setcookie('filter_time', '', time() - 3600, '/');
-    setcookie('filter_subscription', '', time() - 3600, '/');
-    
+    setcookie('filter_status', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_type', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_urgency', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_time', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_subscription', '', time() - 3600, '/', '', true, true);
     header('Location: index.php');
     exit();
 }
 
-// Reset filters if page is refreshed (no GET parameters)
+
 if (empty($_GET) || (count($_GET) === 1 && isset($_GET['report']))) {
-    setcookie('filter_status', '', time() - 3600, '/');
-    setcookie('filter_type', '', time() - 3600, '/');
-    setcookie('filter_urgency', '', time() - 3600, '/');
-    setcookie('filter_time', '', time() - 3600, '/');
-    setcookie('filter_subscription', '', time() - 3600, '/');
+    setcookie('filter_status', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_type', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_urgency', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_time', '', time() - 3600, '/', '', true, true);
+    setcookie('filter_subscription', '', time() - 3600, '/', '', true, true);
 }
 
-$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
-$filter_type = isset($_GET['type']) ? $_GET['type'] : '';
-$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
-$filter_time = isset($_GET['time']) ? $_GET['time'] : '';
-$filter_subscription = isset($_GET['subscription']) ? $_GET['subscription'] : '';
+
+$filter_status = isset($_GET['status']) ? $_GET['status'] : (isset($_COOKIE['filter_status']) ? $_COOKIE['filter_status'] : '');
+$filter_type = isset($_GET['type']) ? $_GET['type'] : (isset($_COOKIE['filter_type']) ? $_COOKIE['filter_type'] : '');
+$filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : (isset($_COOKIE['filter_urgency']) ? $_COOKIE['filter_urgency'] : '');
+$filter_time = isset($_GET['time']) ? $_GET['time'] : (isset($_COOKIE['filter_time']) ? $_COOKIE['filter_time'] : '');
+$filter_subscription = isset($_GET['subscription']) ? $_GET['subscription'] : (isset($_COOKIE['filter_subscription']) ? $_COOKIE['filter_subscription'] : '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['status'])) {
-        setcookie('filter_status', $_GET['status'], time() + (30 * 24 * 60 * 60), '/');
+        setcookie('filter_status', $_GET['status'], time() + (30 * 24 * 60 * 60), '/', '', true, true);
     }
     if (isset($_GET['type'])) {
-        setcookie('filter_type', $_GET['type'], time() + (30 * 24 * 60 * 60), '/');
+        setcookie('filter_type', $_GET['type'], time() + (30 * 24 * 60 * 60), '/', '', true, true);
     }
     if (isset($_GET['urgency'])) {
-        setcookie('filter_urgency', $_GET['urgency'], time() + (30 * 24 * 60 * 60), '/');
+        setcookie('filter_urgency', $_GET['urgency'], time() + (30 * 24 * 60 * 60), '/', '', true, true);
     }
     if (isset($_GET['time'])) {
-        setcookie('filter_time', $_GET['time'], time() + (30 * 24 * 60 * 60), '/');
+        setcookie('filter_time', $_GET['time'], time() + (30 * 24 * 60 * 60), '/', '', true, true);
     }
     if (isset($_GET['subscription'])) {
-        setcookie('filter_subscription', $_GET['subscription'], time() + (30 * 24 * 60 * 60), '/');
+        setcookie('filter_subscription', $_GET['subscription'], time() + (30 * 24 * 60 * 60), '/', '', true, true);
     }
 }
 
