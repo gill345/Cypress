@@ -1,14 +1,14 @@
 <h1>Project Cypress</h1>
 Link to site: <a href="https://cypress.great-site.net/">Cypress</a> 
 
-Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time. 
+Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.
 
 ## Features
 - User Authentication: Register, log in, and change passwords securely. Passwords and Security Question Answers are hashed for secure storage. A Captcha prevents bots from signing up.
-- Report a Problem To Admins: Users can click on a place on the map, choose the problem type, and add a description. 
-- Admin Report Verification: Admins can review, update status, and delete reports from a unique dashboard.
+- Report a Problem To Admins: Users can click on a place on the map, choose the problem type, set urgency level and add a description. Optional contact information for notifications.
+- Admin Report Verification: Admins can review, update status, and delete reports from a unique dashboard. Ability to mark emergency services or city services as contacted.
 - Filter out Duplicate Reports: System analyzes distance and report types to determine duplicate reports. Admins are able to remove duplicate reports and accept a single report with the click of a button.
-- View Reports: Users can view all in progress and recently resolved reports on an interactive map. Furthermore, users are able to filter out reports by type, status, urgency, or by time. Filters set are saved up to a month using a cookie.
+- View Reports: Users can view all in progress and recently resolved reports on an interactive map. Advanced filtering system with filters by type, status, urgency, time and notification. Filters set are saved up to a month using a cookie.
 - Subscribe to Reports: Users can subscribe to reports on the map or upon submission and receive emails on updates to problem status.
 - Responsive Design: Works on various devices, ie. Phone, Laptop, Desktop, etc. 
 
@@ -29,8 +29,11 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 ## Database Structure
 - **Users:** Stores user information (`id`, `name`, `email`, `password`, `role`, `created_at`, `security_question`, `security_answer`).
 - **City_Reports:** Stores user reports (`id`, `user_id`, `description`, `report_type`, `latitude`, `longitude`, `contact_info`, `created_at`, `status`, `urgency`, `notify_updates`, `emergency_contacted`, `city_service_contacted`).
+- **Report_Subscriptions:** Manages notification subscriptions (`id`, `report_id`, `user_id`, `email`, `created_at`)
 
 
 ## Future Enhancements
 - Improved Duplicate Filter Schema
 - Cleaner UI
+- Enhanced Email Templates
+- More Advanced Notification System 
