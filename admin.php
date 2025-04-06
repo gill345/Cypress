@@ -10,23 +10,24 @@ use PHPMailer\PHPMailer\Exception;
 
 session_start();
 
-// Function to send status update notifications
+
 function sendStatusNotification($report_id, $status, $recipient_email) {
     try {
         $mail = new PHPMailer(true);
         
         // Server settings
+        // Enter your SMTP server details here
         $mail->SMTPDebug = SMTP::DEBUG_OFF;
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'son18032005@gmail.com';
-        $mail->Password   = 'lkxhhtncozhbybui';
+        $mail->Username   = '';
+        $mail->Password   = '';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         
-        // Recipients
-        $mail->setFrom('son18032005@gmail.com', 'Cypress Notification');
+        // Enter your sender email address here
+        $mail->setFrom('', 'Cypress Notification');
         $mail->addAddress($recipient_email);
         
         // Content
@@ -77,11 +78,11 @@ function sendStatusNotification($report_id, $status, $recipient_email) {
     }
 }
 
-// Function to notify all subscribers of a report
+
 function notifyAllSubscribers($report_id, $status) {
     global $conn;
     
-    // Get all subscribers for this report
+    
     $query = "SELECT email FROM report_subscriptions WHERE report_id = ?";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $report_id);
@@ -144,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
             
-            // Notify all subscribers
+            
             notifyAllSubscribers($problem_id, $new_status);
             
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
@@ -159,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
             
-            // Notify all subscribers
+           
             notifyAllSubscribers($problem_id, $new_status);
             
             echo json_encode(['success' => true, 'message' => "Problem #$problem_id status set to: $new_status"]);
@@ -167,10 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'delete') {
-            // Notify all subscribers before deleting
+            
             notifyAllSubscribers($problem_id, 'Deleted');
             
-            // Delete the report
+            
             $delete_query = "DELETE FROM city_reports WHERE id = ?";
             $stmt = $conn->prepare($delete_query);
             $stmt->bind_param("i", $problem_id);
@@ -185,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $duplicates = isset($_POST['duplicates']) ? json_decode($_POST['duplicates'], true) : [];
             $duplicates = array_map('intval', $duplicates);
             
-            // Get user email for notification before updating
+            
             $email_query = "SELECT u.email, cr.contact_info, cr.notify_updates 
                            FROM city_reports cr 
                            LEFT JOIN users u ON cr.user_id = u.id 
@@ -197,16 +198,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user_data = $result->fetch_assoc();
             $stmt->close();
             
-            // Update the selected report to "In Progress"
+            
             $update_query = "UPDATE city_reports SET status = 'In Progress' WHERE id = ?";
             $stmt = $conn->prepare($update_query);
             $stmt->bind_param("i", $problem_id);
             $stmt->execute();
             $stmt->close();
             
-            // Send notification for the selected report if user has opted in
+            
             if ($user_data && $user_data['notify_updates']) {
-                // Use contact info email if provided, otherwise use user's email
+                
                 $notification_email = !empty($user_data['contact_info']) && filter_var($user_data['contact_info'], FILTER_VALIDATE_EMAIL) 
                     ? $user_data['contact_info'] 
                     : $user_data['email'];
@@ -216,9 +217,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // Handle reports to remove
+           
             if (!empty($duplicates)) {
-                // Get user emails for reports to be removed
+                
                 $duplicate_ids = implode(',', $duplicates);
                 $duplicate_query = "SELECT cr.id, u.email, cr.contact_info, cr.notify_updates 
                                    FROM city_reports cr 
@@ -226,14 +227,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                    WHERE cr.id IN ($duplicate_ids)";
                 $duplicate_result = $conn->query($duplicate_query);
                 
-                // Delete the reports
+           
                 $delete_query = "DELETE FROM city_reports WHERE id IN (" . implode(',', $duplicates) . ")";
                 $conn->query($delete_query);
                 
-                // Send notifications for removed reports
+              
                 while ($duplicate = $duplicate_result->fetch_assoc()) {
                     if ($duplicate['notify_updates']) {
-                        // Use contact info email if provided, otherwise use user's email
+                       
                         $notification_email = !empty($duplicate['contact_info']) && filter_var($duplicate['contact_info'], FILTER_VALIDATE_EMAIL) 
                             ? $duplicate['contact_info'] 
                             : $duplicate['email'];
@@ -271,13 +272,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get filter values from the request
+
 $filter_type = isset($_GET['type']) ? $_GET['type'] : '';
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_urgency = isset($_GET['urgency']) ? $_GET['urgency'] : '';
 $filter_time = isset($_GET['time']) ? $_GET['time'] : '';
 
-// Modify the query to include filters
+
 $query = "SELECT city_reports.id, city_reports.description, city_reports.report_type, city_reports.latitude, city_reports.longitude, city_reports.contact_info, city_reports.status, city_reports.created_at, city_reports.urgency, city_reports.emergency_contacted, city_reports.city_service_contacted, users.name AS submitted_by 
           FROM city_reports 
           LEFT JOIN users ON city_reports.user_id = users.id 

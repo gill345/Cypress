@@ -2,7 +2,9 @@
 require_once 'db.php';
 session_start();
 
-
+// Generate a random 6-character alphanumeric string for the captcha code
+// This will be used to validate the captcha input from the user
+// The captcha code is stored in the session for later verification
 $captcha_code = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"), 0, 6);
 $_SESSION['captcha_code'] = $captcha_code;
 

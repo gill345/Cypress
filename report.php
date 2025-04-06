@@ -35,26 +35,26 @@ if (isset($_GET['admin_mode'])) {
     }
 }
 
-// Function to send notification email
+
 function sendNotificationEmail($to_email, $report_details, $report_id) {
     try {
         $mail = new PHPMailer(true);
-        //Server settings
+        
 
-        // Capture debug output to a variable
+       
         $mail->SMTPDebug = SMTP::DEBUG_OFF;
         
-        //This way, debugging messages will be saved in the server logs, and won't interfere with header redirects after submission.                    
+        // Enter your SMTP server details here
         $mail->isSMTP();                                            
         $mail->Host       = 'smtp.gmail.com';                     
         $mail->SMTPAuth   = true;                                   
-        $mail->Username   = 'son18032005@gmail.com';                
-        $mail->Password   = 'lkxhhtncozhbybui';                    
+        $mail->Username   = '';                
+        $mail->Password   = '';                    
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            
         $mail->Port       = 587;                                    
 
-        //Recipients
-        $mail->setFrom('son18032005@gmail.com', 'Cypress Notification');
+        // Enter your sender email address here
+        $mail->setFrom('', 'Cypress Notification');
         $mail->addAddress($to_email);
 
         //Content
@@ -133,10 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$stmt->execute()) {
             throw new Exception("Failed to insert report: " . $stmt->error);
         }
-        $report_id = $conn->insert_id; // Get the ID of the newly inserted report
+        $report_id = $conn->insert_id; 
         $stmt->close();
 
-        // Add subscription entry if notifications are enabled
+       
         if ($subscribe_notifications) {
             $notification_email = !empty($contact_info) && filter_var($contact_info, FILTER_VALIDATE_EMAIL) 
                 ? $contact_info 
@@ -148,12 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (!$stmt->execute()) {
                 error_log("Failed to create subscription entry: " . $stmt->error);
-                // Continue with the submission even if subscription entry fails
+                
             }
             $stmt->close();
         }
 
-        // Send notification email if subscribed
+       
         if ($subscribe_notifications) {
             $report_details = [
                 'report_type' => $report_type,
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $email_sent = sendNotificationEmail($notification_email, $report_details, $report_id);
                 if (!$email_sent) {
                     error_log("Failed to send notification email to: " . $notification_email);
-                    // Continue with the submission even if email fails
+                    
                 }
             }
         }
@@ -175,9 +175,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: index.php?report=submitted');
         exit();
     } catch (Exception $e) {
-        // Log the error
+        
         error_log("Error in report submission: " . $e->getMessage());
-        // Show user-friendly error
+        
         die("An error occurred while submitting your report. Please try again or contact support if the problem persists. Error: " . $e->getMessage());
     }
 }

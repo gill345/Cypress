@@ -1,5 +1,5 @@
 <?php
-session_start(); // Ensure session is started for CAPTCHA validation
+session_start(); 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     include 'db.php';
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         $stmt->close();
 
-        // Insert new user into the database
+        
         $sql = "INSERT INTO users (name, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssss", $name, $email, $password, $security_question, $security_answer);

@@ -1,5 +1,5 @@
 <?php
-// Ensure no output before this point
+
 require_once 'db.php';
 session_start();
 
@@ -119,7 +119,7 @@ if (!empty($filter_time)) {
 
 $stmt = $conn->prepare($query);
 
-// Bind parameters based on subscription filter
+
 if (!empty($filter_subscription)) {
     if ($filter_subscription === 'subscribed') {
         $stmt->bind_param("ii", $_SESSION['user_id'], $_SESSION['user_id']);
@@ -157,8 +157,9 @@ $stmt->close();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzzFkw0-X4u1k8UmE3r3-XkdDKv7Ip-cg&libraries=places"></script>
+   
+    <!-- Place your Google Maps API key here in the src attribute-->
+    <script src=""></script>
 
     <style>
         body {
@@ -491,13 +492,13 @@ $stmt->close();
         var userLocationMarker = null;
         var searchLocationMarker = null;
         
-        // Initialize the map tiles
+       
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // Initialize Google Places Autocomplete
+        
         const searchInput = document.getElementById('location-search');
         const autocomplete = new google.maps.places.Autocomplete(searchInput, {
             componentRestrictions: { country: "ca" },
@@ -506,7 +507,7 @@ $stmt->close();
             types: ["geocode", "establishment"]
         });
 
-        // Handle place selection
+        
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
             
@@ -518,12 +519,12 @@ $stmt->close();
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
             
-            // Remove existing search marker if it exists
+            
             if (searchLocationMarker) {
                 map.removeLayer(searchLocationMarker);
             }
             
-            // Add red pin for searched location
+            
             searchLocationMarker = L.marker([lat, lng], {
                 icon: L.icon({
                     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -533,17 +534,17 @@ $stmt->close();
                 })
             }).addTo(map);
             
-            // Center map on the selected location
+           
             map.setView([lat, lng], 15);
         });
 
-        // Get user's location using browser's Geolocation API
+        
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 const userLat = position.coords.latitude;
                 const userLng = position.coords.longitude;
                 
-                // Create blue dot for user's location
+                
                 userLocationMarker = L.marker([userLat, userLng], {
                     icon: L.divIcon({
                         className: 'user-location-marker',
@@ -555,7 +556,7 @@ $stmt->close();
             });
         }
 
-        // Custom icons setup
+        
         var customIcons = {
             "accident": L.icon({
                 iconUrl: 'https://img.icons8.com/external-flaticons-lineal-color-flat-icons/100/external-crash-racing-flaticons-lineal-color-flat-icons.png',
@@ -597,7 +598,7 @@ $stmt->close();
 
         var displayedReports = <?php echo json_encode($displayed_reports); ?>;
         
-        // Display existing reports
+       
         displayedReports.forEach(function(report) {
             var icon = customIcons[report.report_type.toLowerCase()] || L.icon({
                 iconUrl: 'https://img.icons8.com/ios-filled/50/000000/marker.png',
@@ -608,14 +609,14 @@ $stmt->close();
 
             var marker = L.marker([report.latitude, report.longitude], { icon: icon }).addTo(map);
 
-            // Add a simple tooltip for hover preview
+            
             marker.bindTooltip(`Problem #${report.id}: ${report.description}`, { 
                 permanent: false, 
                 direction: 'top',
                 offset: [0, -30]
             });
 
-            // Add detailed popup that opens on click
+          
             marker.bindPopup(
                 `<strong>Problem #${report.id}</strong><br>
                 ${report.description}<br>
@@ -636,7 +637,7 @@ $stmt->close();
             );
         });
 
-        // Map click handler
+       
         map.on('click', function(e) {
             var coords = e.latlng;
             var url = "report.php?lat=" + coords.lat + "&lng=" + coords.lng;
@@ -645,9 +646,9 @@ $stmt->close();
 
         function toggleNotification(reportId, currentStatus, userEmail, contactInfo) {
             if (!currentStatus) {
-                // If not subscribed, show email input dialog
+                
                 const email = prompt("Enter email for notifications:", contactInfo || userEmail || "");
-                if (!email) return; // User cancelled
+                if (!email) return; 
                 
                 if (!validateEmail(email)) {
                     alert("Please enter a valid email address");
@@ -656,7 +657,7 @@ $stmt->close();
                 
                 updateSubscription(reportId, true, email);
             } else {
-                // If already subscribed, confirm unsubscribe
+               
                 if (confirm("Are you sure you want to unsubscribe from notifications for this problem?")) {
                     updateSubscription(reportId, false);
                 }
@@ -682,7 +683,7 @@ $stmt->close();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload(); // Refresh to update the UI
+                    location.reload(); 
                 } else {
                     alert(data.message || 'Failed to update subscription');
                 }

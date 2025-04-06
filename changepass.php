@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->bind_result($user_id, $stored_answer);
     if ($stmt->fetch()) {
         if (password_verify($security_answer, $stored_answer)) {
-            // Step 2: Check if new passwords match
+            
             if ($new_password === $confirm_password) {
                 $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
 

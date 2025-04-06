@@ -1,8 +1,11 @@
 <?php
-    $host = "localhost";
-    $user = "stephen";
-    $pass = "admin123";
-    $name = "cypress"; 
+
+    // Database connection details
+    // Replace with your actual database credentials
+    $host = "";
+    $user = "";
+    $pass = "";
+    $name = ""; 
 
     $conn = mysqli_connect($host, $user, $pass, $name);
 

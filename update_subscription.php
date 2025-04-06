@@ -27,7 +27,7 @@ if (!isset($_POST['action']) || $_POST['action'] !== 'update_subscription' || !i
 
 function sendSubscriptionConfirmation($report_id, $recipient_email) {
     try {
-        // Get report details
+        
         global $conn;
         $query = "SELECT description, report_type, status, latitude, longitude, urgency 
                  FROM city_reports WHERE id = ?";
@@ -44,21 +44,21 @@ function sendSubscriptionConfirmation($report_id, $recipient_email) {
 
         $mail = new PHPMailer(true);
         
-        // Server settings
+        // Enter your SMTP server details here
         $mail->SMTPDebug = SMTP::DEBUG_OFF;
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'son18032005@gmail.com';
-        $mail->Password   = 'lkxhhtncozhbybui';
+        $mail->Username   = '';
+        $mail->Password   = '';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         
-        // Recipients
-        $mail->setFrom('son18032005@gmail.com', 'Cypress Notification');
+        // Enter your sender email address here
+        $mail->setFrom('', 'Cypress Notification');
         $mail->addAddress($recipient_email);
         
-        // Content
+        
         $mail->isHTML(true);
         $mail->Subject = "Subscription Confirmation - Report #$report_id - Cypress";
         $mail->Body = "
@@ -96,13 +96,13 @@ if ($subscribe && !$email) {
 
 try {
     if ($subscribe) {
-        // Add new subscription
+        
         $insert_query = "INSERT INTO report_subscriptions (report_id, user_id, email) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($insert_query);
         $stmt->bind_param("iis", $report_id, $user_id, $email);
         
         if ($stmt->execute()) {
-            // Send confirmation email
+            
             if (sendSubscriptionConfirmation($report_id, $email)) {
                 echo json_encode(['success' => true, 'message' => 'Subscribed successfully']);
             } else {
