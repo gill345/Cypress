@@ -1,7 +1,18 @@
 <h1>Project Cypress</h1>
-Link to site: <a href="https://cypress.great-site.net/">Cypress</a> 
 
+Link to site: <a href="https://cypress.great-site.net/">Cypress</a>. Feel Free to sign up for an account. Admin Account required for administrator features.
+
+
+## Overview
 Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.
+
+![image](https://github.com/user-attachments/assets/11a1d39f-cc6d-49aa-830f-70b8a77ec9c2)
+
+<hr>
+
+
+
+
 
 ## Features
 - **User Authentication:** :
