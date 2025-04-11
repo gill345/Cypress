@@ -35,7 +35,8 @@ Cypress is a community-driven platform for reporting and tracking public issues 
   - Filters set are saved up to a month using a cookie.
 - **Subscribe to Reports**:
   - Users can subscribe to reports upon submission or directly on map (if they forgot to during the submission!) and receive emails on updates to problem status.
-- **Responsive Design**: Works on various devices, ie. Phone, Laptop, Desktop, etc. 
+- **Responsive Design**:
+  - Works on various devices, ie. Phone, Laptop, Desktop, etc. 
 
 ## Technologies Used
 - **Frontend:** HTML, CSS, Bootstrap, JavaScript
