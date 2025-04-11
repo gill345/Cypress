@@ -3,7 +3,7 @@
 Link to site: <a href="https://cypress.great-site.net/">Cypress</a>. Feel Free to sign up for an account. Admin Account required for administrator features.
 
 
-## Overview
+## 📜Overview
 Cypress is a community-driven platform for reporting and tracking public issues on a Toronto map. Users can create alerts for problems like potholes or broken streetlights, while city workers can update and resolve them in real time.
 
 ![image](https://github.com/user-attachments/assets/11a1d39f-cc6d-49aa-830f-70b8a77ec9c2)
@@ -11,11 +11,14 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 <hr>
 
 
+## 🧑‍💻Team Members
+- Umair Alam
+- Ranbir Gill
+- Harish Kiritharan
+- Stephen Nguyen
 
-
-
-## Features
-- **User Authentication:** :
+## 📝Features
+- **User Authentication:** 
   - Register, log in, and change passwords securely.
   - Passwords and Security Question Answers are hashed for secure storage.
   - A Captcha prevents bots from signing up.
@@ -38,12 +41,12 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 - **Responsive Design**:
   - Works on various devices, ie. Phone, Laptop, Desktop, etc. 
 
-## Technologies Used
-- **Frontend:** HTML, CSS, Bootstrap, JavaScript
+## 🤖Technologies Used
+- **Frontend:** HTML, CSS, Bootstrap, JavaScript. Leaflet JS
 - **Backend:** PHP
 - **Database:** MySQL
 
-## Setup Instructions
+## 🏗️Setup Instructions
 1. Clone the repository: `git clone https://github.com/gill345/cypress.git`
 2. Set up a MySQL database and import the provided SQL schema.
 3. Configure the database connection in `db.php`.
@@ -52,14 +55,15 @@ Cypress is a community-driven platform for reporting and tracking public issues 
 6. For Mail Functionality setup SMTP variables and senter email in required files: `index.php`, `report.php`, `admin.php`
 7. Start the server and access the application via the browser.
 
-## Database Structure
+## 🗃️Database Structure
 - **Users:** Stores user information (`id`, `name`, `email`, `password`, `role`, `created_at`, `security_question`, `security_answer`).
 - **City_Reports:** Stores user reports (`id`, `user_id`, `description`, `report_type`, `latitude`, `longitude`, `contact_info`, `created_at`, `status`, `urgency`, `notify_updates`, `emergency_contacted`, `city_service_contacted`).
 - **Report_Subscriptions:** Manages notification subscriptions from the popups (`id`, `report_id`, `user_id`, `email`, `created_at`)
 
 
-## Future Enhancements
+## 💡Future Enhancements
 - Improved Duplicate Filter Schema
 - Cleaner UI
 - Enhanced Email Templates
-- More Advanced Notification System 
+- More Advanced Notification System
+- Additional Problem Types
